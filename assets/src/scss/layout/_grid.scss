@@ -1,0 +1,17 @@
+*,
+*:after,
+*:before {
+  @include box-sizing(border-box);
+}
+
+.d-flex {
+  display: flex;
+}
+
+.d-none {
+  display: none !important;
+}
+
+.align-center {
+  align-items: center
+}

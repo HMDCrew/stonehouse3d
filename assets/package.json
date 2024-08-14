@@ -1,0 +1,48 @@
+{
+  "name": "assets",
+  "version": "1.0.0",
+  "description": "support nodejs for template",
+  "main": "main.js",
+  "scripts": {
+    "prod": "cross-env NODE_ENV=production webpack --mode production --progress",
+    "dev": "cross-env NODE_ENV=development webpack --watch --mode development --progress"
+  },
+  "keywords": [
+    "wordpress",
+    "theme"
+  ],
+  "author": "Andrei Leca",
+  "private": true,
+  "license": "MIT",
+  "browserslist": [
+    "defaults"
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.18.10",
+    "@babel/preset-env": "^7.18.10",
+    "@babel/preset-react": "^7.18.6",
+    "babel-loader": "^8.2.5",
+    "clean-webpack-plugin": "^4.0.0",
+    "cross-env": "^7.0.3",
+    "css-loader": "^6.7.1",
+    "css-minimizer-webpack-plugin": "^4.0.0",
+    "cssnano": "^5.1.12",
+    "file-loader": "^6.2.0",
+    "mini-css-extract-plugin": "^2.6.1",
+    "terser-webpack-plugin": "^5.3.3",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "dotenv-webpack": "^8.1.0",
+    "maptalks": "^1.0.0-rc.36",
+    "maptalks.three": "^0.38.3",
+    "postcss-loader": "^7.0.1",
+    "sass": "^1.54.4",
+    "sass-loader": "^13.0.2",
+    "stream": "^0.0.3",
+    "style-loader": "^3.3.1",
+    "three": "^0.167.1"
+  }
+}
