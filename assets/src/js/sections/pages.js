@@ -16,6 +16,7 @@
 
 // import { createCanvas, loadImage } from 'canvas'
 import * as maptalks from 'maptalks'
+import marker_icon from '../../images/marker.svg'
 // import { ThreeLayer } from 'maptalks.three'
 
 // const canvas = createCanvas(200, 200);
@@ -31,7 +32,7 @@ import * as maptalks from 'maptalks'
 // geografica: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
 // roards: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
 
-var map = new maptalks.Map('stonemap', {
+const map = new maptalks.Map('stonemap', {
     center: [-0.113049,51.498568],
     zoom: 14,
     baseLayer: new maptalks.TileLayer('base', {
@@ -39,6 +40,19 @@ var map = new maptalks.Map('stonemap', {
         subdomains: ["a","b","c","d", "e"],
         attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
     })
+})
+
+
+map.on('click', (e) => {
+
+    const marker = new maptalks.ui.UIMarker(e.coordinate, {
+        'draggable'     : false,
+        'single'        : false,
+        'content'       : `<img src="${marker_icon}" class="marker_icon" />`,
+        'verticalAlignment' : 'top'
+    })
+
+    marker.addTo(map).show()
 })
 
 // const layer = new ThreeLayer('three');
