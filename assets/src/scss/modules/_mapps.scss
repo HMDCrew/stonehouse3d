@@ -11,6 +11,18 @@
         height: 80vh;
         outline: 0 !important;
         transition: all .3s ease-in-out;
+
+        svg.marker {
+            .color-svg-identity {
+                transition: all .3s;
+            }
+
+            &:hover {
+                .color-svg-identity {
+                    fill: #5cb85c !important;
+                }
+            }
+        }
     }
 }
 
