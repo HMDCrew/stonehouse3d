@@ -2,10 +2,10 @@ import { sendHttpReq } from "../utils/api/http"
 
 export const crud = {
 
-    create_location: ( coordinate ) => sendHttpReq({
+    create_location: ( lat, lng ) => sendHttpReq({
         url: stonehouse_data.json_url + 'save-house',
         data: {
-            location: coordinate
+            location: { lat, lng }
         },
         method: 'POST',
         headers: {
