@@ -65,7 +65,20 @@ export class MaptalksUX {
                     item: defaults.menu.my_location,
                     click : () => { 
                         defaults.foundMy().then(res => {
-                            console.log(res)
+
+                            const coordinate = new maptalks.Coordinate({ x: res.lng, y: res.lat })
+
+                            const marker2 = this.set_marker(coordinate, defaults.point_marker, 'middle')
+                            marker2.addTo(this.map).show()
+
+                            this.map.animateTo({
+                                center: [res.lng, res.lat],
+                                zoom: 13,
+                                pitch: 0,
+                                bearing: 0
+                            }, {
+                                duration: 900
+                            })
                         })
                     }
                 },
@@ -155,6 +168,7 @@ export class MaptalksUX {
         this.timerId = setTimeout(() => {
 
             if ( ! this.mouse_has_moved ) {
+                console.log(e.coordinate)
                 this.set_save_marker( e.coordinate )
             }
         }, 800)
