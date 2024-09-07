@@ -52,6 +52,115 @@ export class MaptalksUX {
         })
     }
 
+    /**
+     * @param {Array<VALUE>} arr The array to modify.
+     * @param {!Array<VALUE>|VALUE} data The elements or arrays of elements to add to arr.
+     * @template VALUE
+     */
+    extend(arr, data) {
+
+        const extension = Array.isArray(data) ? data : [data];
+        const length = extension.length;
+
+        for (let i = 0; i < length; i++) {
+            arr[arr.length] = extension[i];
+        }
+    }
+
+    /**
+     * Converts degrees to radians.
+     *
+     * @param {number} angleInDegrees Angle in degrees.
+     * @return {number} Angle in radians.
+     */
+    toRadians(angleInDegrees) {
+        return (angleInDegrees * Math.PI) / 180;
+    }
+
+    /**
+     * Converts radians to to degrees.
+     *
+     * @param {number} angleInRadians Angle in radians.
+     * @return {number} Angle in degrees.
+     */
+    toDegrees(angleInRadians) {
+        return (angleInRadians * 180) / Math.PI;
+    }
+
+    /**
+     * Returns the coordinate at the given distance and bearing from `c1`.
+     *
+     * @param {import("./coordinate.js").Coordinate} c1 The origin point (`[lon, lat]` in degrees).
+     * @param {number} distance The great-circle distance between the origin
+     *     point and the target point.
+     * @param {number} bearing The bearing (in radians).
+     * @param {number} [radius] The sphere radius to use.  Defaults to the Earth's
+     *     mean radius using the WGS84 ellipsoid.
+     * @return {import("./coordinate.js").Coordinate} The target point.
+     */
+    offset(c1, distance, bearing, radius) {
+
+        const DEFAULT_RADIUS = 6371008.8;
+
+        radius = radius || DEFAULT_RADIUS;
+
+        const lat1 = this.toRadians(c1[1]);
+        const lon1 = this.toRadians(c1[0]);
+        const dByR = distance / radius;
+        const lat = Math.asin(
+            Math.sin(lat1) * Math.cos(dByR) +
+            Math.cos(lat1) * Math.sin(dByR) * Math.cos(bearing),
+        );
+
+        const lon = lon1 + Math.atan2(
+            Math.sin(bearing) * Math.sin(dByR) * Math.cos(lat1),
+            Math.cos(dByR) - Math.sin(lat1) * Math.sin(lat),
+        );
+
+        return [this.toDegrees(lon), this.toDegrees(lat)];
+    }
+  
+
+    circular(center, radius, n, sphereRadius) {
+        n = n ? n : 64;
+
+        const flatCoordinates = [];
+
+        // che OpenLayer ci perdoni per i nostri peccati
+        for (let i = 0; i < n; ++i) {
+
+            this.extend(
+                flatCoordinates,
+                this.offset(center, radius, (2 * Math.PI * i) / n, sphereRadius),
+            );
+        }
+
+        flatCoordinates.push(flatCoordinates[0], flatCoordinates[1]);
+
+        const result = flatCoordinates.reduce((acc, _, i, array) => {
+
+            if (i % 2 === 0) {
+                acc.push([array[i], array[i + 1]])
+            }
+
+            return acc
+        }, [])
+
+        return new maptalks.Polygon([ result ], {
+            visible : true,
+            editable : true,
+            cursor : 'pointer',
+            draggable : false,
+            dragShadow : false, // display a shadow during dragging
+            drawOnAxis : null,  // force dragging stick on a axis, can be: x, y
+            symbol: {
+                'lineColor' : '#34495e',
+                'lineWidth' : 2,
+                'polygonFill' : 'rgb(135,196,240)',
+                'polygonOpacity' : 0.4
+            }
+        })
+    }
 
     init_menu() {
 
@@ -66,19 +175,29 @@ export class MaptalksUX {
                     click : () => { 
                         defaults.foundMy().then(res => {
 
+                            console.log(res)
+
+                            
                             const coordinate = new maptalks.Coordinate({ x: res.lng, y: res.lat })
 
                             const marker2 = this.set_marker(coordinate, defaults.point_marker, 'middle')
                             marker2.addTo(this.map).show()
 
-                            this.map.animateTo({
-                                center: [res.lng, res.lat],
-                                zoom: 13,
-                                pitch: 0,
-                                bearing: 0
-                            }, {
-                                duration: 900
-                            })
+                            
+                            const coords = [res.lng, res.lat];
+                            const accuracy = this.circular(coords, res.position.coords.accuracy);
+
+                            new maptalks.VectorLayer('vector', accuracy).addTo(this.map)
+                            this.map.fitExtent(accuracy.getExtent())
+
+                            // this.map.animateTo({
+                            //     center: [res.lng, res.lat],
+                            //     zoom: 13,
+                            //     pitch: 0,
+                            //     bearing: 0
+                            // }, {
+                            //     duration: 900
+                            // })
                         })
                     }
                 },
