@@ -1,4 +1,4 @@
-import * as maptalks from 'maptalks'
+// import * as maptalks from 'maptalks'
 import { TileLayer, Map, Polygon, control, VectorLayer, ui } from 'maptalks'
 import { defaults } from '../../constants/defaults'
 
@@ -108,7 +108,6 @@ export class MaptalksUX {
 
 
                             const circle = this.circular(coords, res.accuracy)
-
                             new VectorLayer('vector', circle).addTo(this.map)
                             
                             this.map.fitExtent(circle.getExtent())
