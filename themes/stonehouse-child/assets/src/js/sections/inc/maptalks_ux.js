@@ -103,8 +103,8 @@ export class MaptalksUX {
 
                             const coords = [res.lng, res.lat]
 
-                            const marker2 = this.set_marker(coords, defaults.point_marker, 'middle')
-                            marker2.addTo(this.map).show()
+                            const marker = this.set_marker(coords, defaults.point_marker, 'middle')
+                            marker.addTo(this.map).show()
 
 
                             const circle = this.circular(coords, res.accuracy)
