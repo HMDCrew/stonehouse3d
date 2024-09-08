@@ -1,10 +1,10 @@
 // import * as maptalks from 'maptalks'
-import { TileLayer, Map, Polygon, control, VectorLayer, ui } from 'maptalks'
-import { defaults } from '../../constants/defaults'
+import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate } from 'maptalks'
+import { defaults } from '../constants/defaults'
+import { MyLocation } from './inc/myLocation';
 
 
-
-import { crud } from '../../constants/crud'
+import { crud } from '../constants/crud'
 
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
@@ -19,6 +19,11 @@ export class MaptalksUX {
     baseLayer;
     menu;
 
+    myLocation
+    myLocationMarker;
+    myLocationAccuracyLayer;
+
+
     mouse_has_moved = null
     timerId = null
 
@@ -26,6 +31,7 @@ export class MaptalksUX {
 
         this.map = this.init_map()
         this.menu = this.init_menu()
+        this.myLocation = new MyLocation()
 
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
@@ -57,22 +63,9 @@ export class MaptalksUX {
     }
 
 
-    circular(center, radius, n, sphereRadius) {
-        n = n ? n : 32;
+    circular(center, radius) {
 
-        const flatCoordinates = [];
-
-        // che OpenLayer ci perdoni per i nostri peccati
-        for (let i = 0; i < n; ++i) {
-
-            flatCoordinates.push(
-                defaults.sphereOffset(center, radius, (2 * Math.PI * i) / n, sphereRadius)
-            )
-        }
-
-        flatCoordinates.push(flatCoordinates[0])
-
-        return new Polygon([ flatCoordinates ], {
+        return new Polygon([ this.myLocation.circular(center, radius) ], {
             visible : true,
             editable : true,
             cursor : 'pointer',
@@ -99,19 +92,10 @@ export class MaptalksUX {
                 {
                     item: defaults.menu.my_location,
                     click : () => { 
-                        defaults.foundMy().then(res => {
 
-                            const coords = [res.lng, res.lat]
+                        document.addEventListener('MyPosition', ev => this.location(ev))
 
-                            const marker = this.set_marker(coords, defaults.point_marker, 'middle')
-                            marker.addTo(this.map).show()
-
-
-                            const circle = this.circular(coords, res.accuracy)
-                            new VectorLayer('vector', circle).addTo(this.map)
-                            
-                            this.map.fitExtent(circle.getExtent())
-                        })
+                        this.myLocation.watch()
                     }
                 },
                 {
@@ -131,6 +115,27 @@ export class MaptalksUX {
         return menu
     }
 
+    location( ev ) {
+
+        const res = ev.detail
+        const coord = new Coordinate([res.lng, res.lat])
+
+        if( ! this.myLocationMarker ) {
+
+            this.myLocationMarker = this.set_marker(coord, defaults.point_marker, 'middle')
+            this.myLocationMarker.addTo(this.map).show()
+
+        } else {
+
+            this.myLocationMarker.setCoordinates(coord)
+            this.myLocationAccuracyLayer.remove()
+        }
+
+        const circle = this.circular(coord, res.accuracy)
+        this.myLocationAccuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
+
+        this.map.fitExtent(circle.getExtent())
+    }
 
     handle_create_location = async ( save_btn, coordinate ) => {
 

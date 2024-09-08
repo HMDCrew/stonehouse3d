@@ -1,6 +1,6 @@
 // import { LeafletUX } from "../user_experience/leaflet_ux"
 
-import { MaptalksUX } from './inc/maptalks_ux'
+import { MaptalksUX } from './maptalks_ux'
 
 new Promise( async (resolve) => {
 
