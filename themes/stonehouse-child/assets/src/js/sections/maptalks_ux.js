@@ -43,6 +43,8 @@ export class MaptalksUX {
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
         }
 
+        console.log(stonehouse_data)
+
         this.menu.addTo(this.map);
     }
 
@@ -95,7 +97,7 @@ export class MaptalksUX {
 
                         document.addEventListener('MyPosition', ev => this.location(ev))
 
-                        // Emite Event "MyPosition"
+                        // Emit Event "MyPosition"
                         this.myLocation.watch()
                     }
                 },
@@ -213,6 +215,4 @@ export class MaptalksUX {
 
         this.mouse_has_moved = false
     }
-
-
 }
