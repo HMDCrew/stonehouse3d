@@ -95,6 +95,7 @@ export class MaptalksUX {
 
                         document.addEventListener('MyPosition', ev => this.location(ev))
 
+                        // Emite Event "MyPosition"
                         this.myLocation.watch()
                     }
                 },
