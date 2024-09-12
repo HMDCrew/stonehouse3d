@@ -99,7 +99,7 @@ if ( ! class_exists( 'HOMES_API_ROUTES' ) ) :
 
 				$location = (
 					! empty( $params['location'] )
-					? $this->regex_applied_array( '/[^0-9\.]/i', $params['location'] )
+					? $this->regex_applied_array( '/[^0-9\.\-\,]/i', $params['location'] )
 					: array()
 				);
 
