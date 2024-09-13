@@ -42,11 +42,14 @@ export class ManageLocation {
 
     handle_create_location = async ( coordinate, marker ) => {
 
+        let reponse = {status: 'error'}
+
         this.saveLocation.saveBtn.classList.add('loading')
 
         await crud.create_location( coordinate.x, coordinate.y ).then( res => {
 
             res = JSON.parse(res)
+            reponse = res
 
             if ( res.status === 'success' ) {
 
@@ -66,5 +69,7 @@ export class ManageLocation {
                 marker.setSymbol(this.defaults.marker('error'))
             }
         })
+
+        return reponse
     }
 }

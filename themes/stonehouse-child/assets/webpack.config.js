@@ -97,8 +97,12 @@ module.exports = (env, argv) => ({
             new TerserPlugin({
                 parallel: 4,
             }),
-        ]
+        ],
+        // splitChunks: {
+        //     minSize: 10000,
+        //     maxSize: 250000,
+        // }
     },
-
+    
     plugins: plugins(argv)
 });

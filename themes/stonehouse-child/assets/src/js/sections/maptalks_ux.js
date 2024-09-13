@@ -14,6 +14,7 @@ import { createElementFromHTML } from '../utils/dom_from_string'
 export class MaptalksUX {
 
     mapContainer;
+    details;
 
     map;
     baseLayer;
@@ -34,12 +35,16 @@ export class MaptalksUX {
     constructor() {
 
         this.mapContainer = document.querySelector('.maps')
+        this.details = document.querySelector('.details')
 
         this.map = this.init_map()
         this.markers = new VectorLayer('markers').addTo(this.map)
         this.init_saved_hauses(stonehouse_data)
 
         this.menu = this.init_menu()
+        this.menu.addTo(this.map)
+        this.fix_empty_houses(stonehouse_data.locations)
+
         this.myLocation.location = new MyLocation()
         this.manageLocation = new ManageLocation(defaults)
 
@@ -53,7 +58,6 @@ export class MaptalksUX {
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
         }
 
-        this.menu.addTo(this.map)
     }
 
 
@@ -113,6 +117,19 @@ export class MaptalksUX {
                 }
             ]
         })
+    }
+
+
+    fix_empty_houses(locations) {
+
+        let menu_dom = this.menu.getDOM()
+        const li = menu_dom.querySelector('#houses-svg-icon').closest('li')
+
+        if ( ! locations.length )
+            li.classList.add('disabled')
+
+        else
+            li.classList.remove('disabled')
     }
 
 
@@ -181,6 +198,16 @@ export class MaptalksUX {
     }
 
 
+    append_dom_saved_house(id, title, lat, lng) {
+
+        const item = createElementFromHTML(
+            defaults.house_item( id, title, lat, lng)
+        )
+
+        this.details.append(item)
+    }
+
+
     set_save_marker(coordinate) {
 
         this.manageLocation.reset()
@@ -195,7 +222,25 @@ export class MaptalksUX {
         saveLocation.popup = this.set_html_marker(coordinate, saveLocation.content)
         saveLocation.point = this.set_html_marker(coordinate, defaults.point_marker, 'middle')
 
-        saveLocation.saveBtn.addEventListener('click', async ev => this.manageLocation.handle_create_location( coordinate, saveLocation.marker ), false)
+        saveLocation.saveBtn.addEventListener('click', async ev => {
+
+            const response = await this.manageLocation.handle_create_location( coordinate, saveLocation.marker )
+
+            if ( this.manageLocation.locationSaved ) {
+
+                if ( response.status === 'success' ) {
+                    this.append_dom_saved_house(
+                        response.message.id,
+                        response.message.title,
+                        response.message.location.lat,
+                        response.message.location.lng
+                    )
+                }
+
+                this.fix_empty_houses([true])
+            }
+        }, false)
+
         saveLocation.closeBtn.addEventListener('click', ev => this.manageLocation.reset(), false)
 
         saveLocation.marker.addTo(this.markers)

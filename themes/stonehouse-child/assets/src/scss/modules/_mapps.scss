@@ -319,6 +319,13 @@
             right: 0;
         }
     }
+
+    .disabled {
+        cursor: auto !important;
+        pointer-events: none !important;
+        opacity: .8;
+        transform: scale(0.9) translateX(-2px);
+    }
 }
 
 // .marker_icon {
