@@ -1,9 +1,9 @@
 // import * as maptalks from 'maptalks'
 import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate, Marker } from 'maptalks'
 import { defaults } from '../constants/defaults'
-import { MyLocation } from './inc/myLocation'
-
-import { crud } from '../constants/crud'
+import { MyLocation } from './inc/MyLocation'
+import { ManageLocation } from './inc/ManageLocation'
+import { createElementFromHTML } from '../utils/dom_from_string'
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
 // topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
@@ -19,10 +19,13 @@ export class MaptalksUX {
     baseLayer;
     menu;
 
-    myLocation
-    myLocationMarker;
-    myLocationAccuracyLayer;
+    myLocation = {
+        location: null,
+        marker: null,
+        accuracyLayer: null
+    };
 
+    manageLocation;
 
     mouse_has_moved = null
     timerId = null
@@ -37,7 +40,8 @@ export class MaptalksUX {
         this.init_saved_hauses(stonehouse_data)
 
         this.menu = this.init_menu()
-        this.myLocation = new MyLocation()
+        this.myLocation.location = new MyLocation()
+        this.manageLocation = new ManageLocation(defaults)
 
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
@@ -49,7 +53,7 @@ export class MaptalksUX {
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
         }
 
-        this.menu.addTo(this.map);
+        this.menu.addTo(this.map)
     }
 
 
@@ -68,6 +72,7 @@ export class MaptalksUX {
         })
     }
 
+
     init_saved_hauses(houses) {
 
         const add_saved_marker = (item) => {
@@ -81,6 +86,7 @@ export class MaptalksUX {
 
         Object.values(houses.locations).forEach( async item => add_saved_marker(item) )
     }
+
 
     init_menu() {
         return new control.Toolbar({
@@ -96,7 +102,7 @@ export class MaptalksUX {
                         document.addEventListener('MyPosition', ev => this.location(ev))
 
                         // Emit Event "MyPosition"
-                        this.myLocation.watch()
+                        this.myLocation.location.watch()
                     }
                 },
                 {
@@ -111,7 +117,7 @@ export class MaptalksUX {
 
 
     circular(center, radius) {
-        return new Polygon([ this.myLocation.circular(center, radius) ], {
+        return new Polygon([ this.myLocation.location.circular(center, radius) ], {
             visible : true,
             editable : true,
             cursor : 'pointer',
@@ -137,56 +143,29 @@ export class MaptalksUX {
 
             const coord = new Coordinate([res.lng, res.lat]) 
 
-            if( ! this.myLocationMarker ) {
+            if( ! this.myLocation.marker ) {
 
-                this.myLocationMarker = this.set_html_marker(coord, defaults.point_marker, 'middle')
-                this.myLocationMarker.addTo(this.map).show()
+                this.myLocation.marker = this.set_html_marker(coord, defaults.point_marker, 'middle')
+                this.myLocation.marker.addTo(this.map).show()
 
             } else {
 
-                this.myLocationMarker.setCoordinates(coord)
-                this.myLocationAccuracyLayer.remove()
+                this.myLocation.marker.setCoordinates(coord)
+                this.myLocation.accuracyLayer.remove()
             }
 
             const circle = this.circular(coord, res.accuracy)
-            this.myLocationAccuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
+            this.myLocation.accuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
 
             this.map.fitExtent(circle.getExtent())
         }
     }
 
 
-    handle_create_location = async ( save_btn, coordinate ) => {
-
-        let falied = true
-        save_btn.classList.add('loading')
-
-        await crud.create_location( coordinate.x, coordinate.y ).then( res => {
-
-            res = JSON.parse(res)
-
-            if ( res.status === 'success' ) {
-
-                falied = false
-                console.log(res)
-
-                save_btn.classList.remove('loading')
-                save_btn.classList.add('loaded')
-            } else {
-
-                save_btn.classList.remove('loading')
-                save_btn.classList.add('error')
-            }
-        })
-
-        return falied
-    }
-
-
     set_marker(coordinate, type = 'default') {
 
         return new Marker( coordinate, {
-            'symbol' : defaults.markers(type)
+            'symbol' : defaults.marker(type)
         })
     }
 
@@ -204,33 +183,24 @@ export class MaptalksUX {
 
     set_save_marker(coordinate) {
 
-        const content = defaults.popupMarker
-        const save_btn = content.querySelector('.btn-add-house')
-        const close_btn = content.querySelector('.close-btn')
+        this.manageLocation.reset()
 
-        const marker = this.set_marker(coordinate)
-        const popup = this.set_html_marker(coordinate, content)
-        const point = this.set_html_marker(coordinate, defaults.point_marker, 'middle')
+        const saveLocation = this.manageLocation.saveLocation
 
-        let falied = true
-        save_btn.addEventListener('click', async ev => falied = await this.handle_create_location( save_btn, coordinate ), false)
+        saveLocation.content = createElementFromHTML( defaults.popupSaveHose )
+        saveLocation.saveBtn = saveLocation.content.querySelector('.btn-add-house')
+        saveLocation.closeBtn = saveLocation.content.querySelector('.close-btn')
 
-        close_btn.addEventListener('click', ev => {
+        saveLocation.marker = this.set_marker(coordinate)
+        saveLocation.popup = this.set_html_marker(coordinate, saveLocation.content)
+        saveLocation.point = this.set_html_marker(coordinate, defaults.point_marker, 'middle')
 
-            if ( falied ) {
-                marker.remove()
-                popup.remove()
-                point.remove()
-            } else {
-                content.querySelector('.popup').remove()
-                popup.remove()
-                point.remove()
-            }
-        }, false)
+        saveLocation.saveBtn.addEventListener('click', async ev => this.manageLocation.handle_create_location( coordinate, saveLocation.marker ), false)
+        saveLocation.closeBtn.addEventListener('click', ev => this.manageLocation.reset(), false)
 
-        marker.addTo(this.markers)
-        popup.addTo(this.map).show()
-        point.addTo(this.map).show()
+        saveLocation.marker.addTo(this.markers)
+        saveLocation.popup.addTo(this.map).show()
+        saveLocation.point.addTo(this.map).show()
     }
 
 
@@ -239,7 +209,7 @@ export class MaptalksUX {
         this.timerId = setTimeout(() => {
 
             if ( ! this.mouse_has_moved ) {
-                console.log(e.coordinate)
+                // console.log(e.coordinate)
                 this.set_save_marker( e.coordinate )
             }
         }, 800)
