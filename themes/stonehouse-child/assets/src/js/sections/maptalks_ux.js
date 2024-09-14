@@ -1,5 +1,7 @@
 // import * as maptalks from 'maptalks'
 import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate, Marker } from 'maptalks'
+import { ClusterLayer } from 'maptalks.markercluster/dist/maptalks.markercluster'
+
 import { defaults } from '../constants/defaults'
 import { MyLocation } from './inc/MyLocation'
 import { ManageLocation } from './inc/ManageLocation'
@@ -40,7 +42,11 @@ export class MaptalksUX {
         this.details = document.querySelector('.details')
 
         this.map = this.init_map(initial_location)
-        this.markers = new VectorLayer('markers').addTo(this.map)
+        
+        // Bad Clusters animation
+        this.cluster = new ClusterLayer('cluster').addTo(this.map)
+        this.cluster.config('animationDuration', 1)
+
         this.init_saved_hauses(stonehouse_data)
 
         this.menu = this.init_menu()
@@ -107,7 +113,7 @@ export class MaptalksUX {
 
         item.addEventListener('mouseenter', ev => 
 
-            this.markers.forEach( async marker => 
+            this.cluster.forEach( async marker => 
                 this.focus_house_marker( item_coord, marker.getCoordinates() )
             )
         )
@@ -122,6 +128,29 @@ export class MaptalksUX {
     }
 
 
+    click_saved_marker(ev) {
+
+        const marker = ev.target
+
+        const content = createElementFromHTML( defaults.popupRouting )
+
+        const btn_walking = content.querySelector('.btn-walking')
+        const btn_cycling = content.querySelector('.btn-cycling')
+        const btn_car = content.querySelector('.btn-car')
+
+        btn_walking.addEventListener('click', ev => console.log('btn_walking')/* this.build_routeing_path( latlng, 'mapbox/walking' ) */, false)
+        btn_cycling.addEventListener('click', ev => console.log('btn_cycling')/* this.build_routeing_path( latlng, 'mapbox/cycling' ) */, false)
+        btn_car.addEventListener('click', ev => console.log('btn_car')/* this.build_routeing_path( latlng, 'mapbox/driving-traffic' ) */, false)
+
+        const close = content.querySelector('.close-btn')
+        const popup = this.set_html_marker( marker.getCoordinates(), content )
+
+        close.addEventListener('click', ev => popup.remove(), false)
+
+        popup.addTo(this.map).show()
+    }
+
+
     init_saved_hauses(houses) {
 
         const add_saved_marker = (item) => {
@@ -130,7 +159,8 @@ export class MaptalksUX {
             const coord = new Coordinate([lat, lng])
 
             const marker = this.set_marker(coord, 'success')
-            marker.addTo(this.markers)
+            marker.on('click', ev => this.click_saved_marker(ev))
+            marker.addTo(this.cluster)
         }
 
         Object.values(houses.locations).forEach( async item => add_saved_marker(item) )
@@ -277,7 +307,8 @@ export class MaptalksUX {
                 )
 
                 this.listen_hover_item_marker( item )
-                marker.addTo(this.markers)
+                marker.addTo(this.cluster)
+                marker.on('click', ev => this.click_saved_marker(ev))
                 this.details.append(item)
             }
 
@@ -307,7 +338,7 @@ export class MaptalksUX {
 
         saveLocation.closeBtn.addEventListener('click', ev => this.manageLocation.reset(), false)
 
-        saveLocation.marker.addTo(this.markers)
+        saveLocation.marker.addTo(this.cluster)
         saveLocation.popup.addTo(this.map).show()
         saveLocation.point.addTo(this.map).show()
     }
