@@ -9,7 +9,6 @@ new Promise( async (resolve) => {
     })
 
     resolve( response.json() )
-
 })
 // .then( val => new MaptalksUX( val.location ) )
 .then( val =>

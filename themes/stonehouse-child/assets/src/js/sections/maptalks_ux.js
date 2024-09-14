@@ -57,7 +57,6 @@ export class MaptalksUX {
 
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
         }
-
     }
 
 
@@ -77,6 +76,50 @@ export class MaptalksUX {
     }
 
 
+    focus_house_marker( item_coord, marker_coord ) {
+
+        const lat_length = item_coord.lat.toString().split(".")[1].length
+        const lng_length = item_coord.lng.toString().split(".")[1].length
+
+        if (
+            item_coord.lat === parseFloat(marker_coord.x.toFixed(lat_length)) &&
+            item_coord.lng === parseFloat(marker_coord.y.toFixed(lng_length))
+        ) {
+            
+            this.map.animateTo({
+                center: marker_coord,
+                zoom: 13,
+            }, {
+                duration: 800
+            })
+        }
+    }
+
+
+    listen_hover_item_marker( item ) {
+
+        const item_coord = {
+            lat: parseFloat( item.querySelector('.location .lat').getAttribute('lat') ),
+            lng: parseFloat( item.querySelector('.location .lng').getAttribute('lng') ),
+        }
+
+        item.addEventListener('mouseenter', ev => 
+
+            this.markers.forEach( async marker => 
+                this.focus_house_marker( item_coord, marker.getCoordinates() )
+            )
+        )
+    }
+
+
+    saved_houses_listeners() {
+
+        const houses = this.details.querySelectorAll('.house')
+
+        houses.forEach( item => this.listen_hover_item_marker( item ) )
+    }
+
+
     init_saved_hauses(houses) {
 
         const add_saved_marker = (item) => {
@@ -89,6 +132,8 @@ export class MaptalksUX {
         }
 
         Object.values(houses.locations).forEach( async item => add_saved_marker(item) )
+
+        this.saved_houses_listeners()
     }
 
 
@@ -198,7 +243,7 @@ export class MaptalksUX {
     }
 
 
-    save_location(response) {
+    save_location(marker, response) {
 
         if ( this.manageLocation.locationSaved ) {
 
@@ -213,6 +258,8 @@ export class MaptalksUX {
                     )
                 )
 
+                this.listen_hover_item_marker( item )
+                marker.addTo(this.markers)
                 this.details.append(item)
             }
 
@@ -236,6 +283,7 @@ export class MaptalksUX {
         saveLocation.point = this.set_html_marker(coordinate, defaults.point_marker, 'middle')
 
         saveLocation.saveBtn.addEventListener('click', async ev => this.save_location(
+            saveLocation.marker,
             await this.manageLocation.handle_create_location( coordinate, saveLocation.marker )
         ), false)
 
