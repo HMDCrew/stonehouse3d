@@ -7,6 +7,8 @@ const DEFAULT_RADIUS = 6371008.8;
 
 export class MyLocation {
 
+    watchPositionID
+
     constructor() {}
 
     circular(center, radius, n, sphereRadius) {
@@ -69,7 +71,7 @@ export class MyLocation {
 
         } else {
 
-            navigator.geolocation.watchPosition(
+            this.watchPositionID = navigator.geolocation.watchPosition(
 
                 // success
                 (pos) => {
@@ -100,6 +102,12 @@ export class MyLocation {
                 }
             )
         }
+    }
+
+    stopWatch() {
+
+        if ( this.watchPositionID )
+            navigator.geolocation.clearWatch(this.watchPositionID)
     }
 
     getPosition() {

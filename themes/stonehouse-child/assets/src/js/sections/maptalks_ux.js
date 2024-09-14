@@ -21,6 +21,8 @@ export class MaptalksUX {
     menu;
 
     myLocation = {
+        status: false,
+        listener_ready: false,
         location: null,
         marker: null,
         accuracyLayer: null
@@ -148,10 +150,26 @@ export class MaptalksUX {
                     item: defaults.menu.my_location,
                     click : () => { 
 
-                        document.addEventListener('MyPosition', ev => this.location(ev))
+                        if ( !this.myLocation.status ) {
 
-                        // Emit Event "MyPosition"
-                        this.myLocation.location.watch()
+                            if( ! this.myLocation.listener_ready ) {
+
+                                document.addEventListener('MyPosition', ev => this.location(ev))
+                                this.myLocation.listener_ready = true
+                            }
+
+                            // Emit Event "MyPosition"
+                            this.myLocation.location.watch()
+                            this.myLocation.status = true
+
+                        } else {
+
+                            this.myLocation.status = false
+                            this.myLocation.marker.remove()
+                            this.myLocation.marker = null
+                            this.myLocation.accuracyLayer.remove()
+                            this.myLocation.location.stopWatch()
+                        }
                     }
                 },
                 {
