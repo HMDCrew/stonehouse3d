@@ -38,6 +38,7 @@
     "dotenv-webpack": "^8.1.0",
     "maptalks": "^1.0.0-rc.36",
     "maptalks.markercluster": "^0.8.8",
+    "maptalks.routeplayer": "^1.0.0",
     "maptalks.three": "^0.38.3",
     "postcss-loader": "^7.0.1",
     "sass": "^1.54.4",

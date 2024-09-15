@@ -1,11 +1,13 @@
 // import * as maptalks from 'maptalks'
 import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate, Marker } from 'maptalks'
 import { ClusterLayer } from 'maptalks.markercluster/dist/maptalks.markercluster'
+import { RoutePlayer, formatRouteData } from 'maptalks.routeplayer'
 
 import { defaults } from '../constants/defaults'
 import { MyLocation } from './inc/MyLocation'
 import { ManageLocation } from './inc/ManageLocation'
 import { createElementFromHTML } from '../utils/dom_from_string'
+import { MapBoxMiddleware } from './inc/MapBoxMiddleware'
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
 // topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
@@ -19,6 +21,7 @@ export class MaptalksUX {
     details;
 
     map;
+    cluster;
     baseLayer;
     menu;
 
@@ -43,7 +46,7 @@ export class MaptalksUX {
 
         this.map = this.init_map(initial_location)
         
-        // Bad Clusters animation
+        // Bad Clusters animations
         this.cluster = new ClusterLayer('cluster').addTo(this.map)
         this.cluster.config('animationDuration', 1)
 
@@ -128,9 +131,46 @@ export class MaptalksUX {
     }
 
 
+    build_routeing_path( latlng, profile ) {
+
+        // destinazione LatLng {lat: 45.463964629396, lng: 9.168176651001}
+        // https://api.mapbox.com/directions/v5/mapbox/walking/9.1824027,45.468503;9.168176651001,45.463964629396?overview=false&alternatives=true&steps=true&access_token=pk.eyJ1IjoiYW5kcmVpbGVjYTU1IiwiYSI6ImNseWFkdHA1aDBtbGkybnBoYTIzYzQ1NWgifQ.DVo1pX3PKKLbDeSVFlt-ZA
+
+        const marker_route = (marker) => {
+            const coord = marker.getCoordinates()
+            middleware.build_route(profile, { lat: coord.x, lng: coord.y }, latlng).then(res => {
+
+                res = JSON.parse(res)
+
+                console.log(res)
+            })
+        }
+
+        const middleware = new MapBoxMiddleware()
+        if ( ! this.myLocation.status ) {
+
+            this.start_location()
+
+            // Observe Variable => this.myLocation.marker => for inescate route api request
+            let observer_id
+            const tick = ( marker ) => {
+                if( marker ) {
+                    marker_route(this.myLocation.marker)
+                    clearInterval(observer_id)
+                }
+            }
+            observer_id = setInterval( () => tick(this.myLocation.marker), 10 )
+
+        } else {
+            marker_route(this.myLocation.marker)
+        }
+
+    }
+
     click_saved_marker(ev) {
 
         const marker = ev.target
+        const coord = marker.getCoordinates()
 
         const content = createElementFromHTML( defaults.popupRouting )
 
@@ -138,12 +178,12 @@ export class MaptalksUX {
         const btn_cycling = content.querySelector('.btn-cycling')
         const btn_car = content.querySelector('.btn-car')
 
-        btn_walking.addEventListener('click', ev => console.log('btn_walking')/* this.build_routeing_path( latlng, 'mapbox/walking' ) */, false)
-        btn_cycling.addEventListener('click', ev => console.log('btn_cycling')/* this.build_routeing_path( latlng, 'mapbox/cycling' ) */, false)
-        btn_car.addEventListener('click', ev => console.log('btn_car')/* this.build_routeing_path( latlng, 'mapbox/driving-traffic' ) */, false)
+        btn_walking.addEventListener('click', ev => this.build_routeing_path( {lat: coord.x, lng: coord.y}, 'mapbox/walking' ), false)
+        btn_cycling.addEventListener('click', ev => this.build_routeing_path( {lat: coord.x, lng: coord.y}, 'mapbox/cycling' ), false)
+        btn_car.addEventListener('click', ev => this.build_routeing_path( coord, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
-        const popup = this.set_html_marker( marker.getCoordinates(), content )
+        const popup = this.set_html_marker( coord, content )
 
         close.addEventListener('click', ev => popup.remove(), false)
 
@@ -169,6 +209,20 @@ export class MaptalksUX {
     }
 
 
+    start_location() {
+
+        if( ! this.myLocation.listener_ready ) {
+
+            document.addEventListener('MyPosition', ev => this.location(ev))
+            this.myLocation.listener_ready = true
+        }
+
+        // Emit Event "MyPosition"
+        this.myLocation.location.watch()
+        this.myLocation.status = true
+    }
+
+
     init_menu() {
         return new control.Toolbar({
             'vertical' : true,
@@ -178,22 +232,13 @@ export class MaptalksUX {
             'items': [
                 {
                     item: defaults.menu.my_location,
-                    click : () => { 
-
+                    click : () => {
                         if ( !this.myLocation.status ) {
 
-                            if( ! this.myLocation.listener_ready ) {
-
-                                document.addEventListener('MyPosition', ev => this.location(ev))
-                                this.myLocation.listener_ready = true
-                            }
-
-                            // Emit Event "MyPosition"
-                            this.myLocation.location.watch()
-                            this.myLocation.status = true
-
+                            this.start_location()
+                
                         } else {
-
+                
                             this.myLocation.status = false
                             this.myLocation.marker.remove()
                             this.myLocation.marker = null
