@@ -1,5 +1,5 @@
 // import * as maptalks from 'maptalks'
-import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate, Marker } from 'maptalks'
+import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate, Marker, LineString } from 'maptalks'
 import { ClusterLayer } from 'maptalks.markercluster/dist/maptalks.markercluster'
 import { RoutePlayer, formatRouteData } from 'maptalks.routeplayer'
 
@@ -139,11 +139,68 @@ export class MaptalksUX {
         const marker_route = (marker) => {
             const coord = marker.getCoordinates()
             middleware.build_route(profile, { lat: coord.x, lng: coord.y }, latlng).then(res => {
-
-                res = JSON.parse(res)
-
+                
+                
+                console.log({from: { lat: coord.x, lng: coord.y }, to: latlng})
                 console.log(res)
+                const routes = () => {
+
+                    const result = []
+
+                    res.forEach(line_coords => {
+
+                        line_coords.forEach( line_coord => {
+
+                            result.push([line_coord[0], line_coord[1], 0])
+                        })
+                    })
+
+                    return result
+                }
+                
+                console.log(routes())
+
+                const route_coordinates = routes()
+
+                // const route = [{
+                //         coordinate: [120, 31, 0],
+                //         time: 301000
+                //     },
+                //     {
+                //         coordinate: [122, 32, 0],
+                //         time: 541000
+                //     },
+                //     //other coordinates
+                // ];
+                // const data = formatRouteData(routes(), { duration: 2000 * 60 * 10 })
+                // const player = new RoutePlayer(data, { speed: 4, debug: true });
+                // console.log(player);
+                // player.play();
+
+                const router_vector = new VectorLayer('line').addTo(this.map)
+
+                // console.log('player: ', player.getCoordinates())
+
+                const line = new LineString(route_coordinates, {
+                    symbol: {
+                        lineColor: 'red'
+                    }
+                })
+
+                
+                // const point = new Marker(player.getStartCoordinate(), {
+                //     zIndex: 1
+                // })
+                
+                line.addTo(router_vector)
+                // point.addTo(router_vector)
+
+                this.map.fitExtent(line.getExtent())
+
             })
+
+
+
         }
 
         const middleware = new MapBoxMiddleware()
