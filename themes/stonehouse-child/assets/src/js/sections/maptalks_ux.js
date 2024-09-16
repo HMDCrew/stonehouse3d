@@ -68,6 +68,8 @@ export class MaptalksUX {
 
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
         }
+
+        this.map.on('click', ev => console.log(ev.coordinate))
     }
 
 
@@ -133,15 +135,21 @@ export class MaptalksUX {
 
     build_routeing_path( latlng, profile ) {
 
+        // 9.1824027,45.468503;9.168176651001,45.463964629396
+
         // destinazione LatLng {lat: 45.463964629396, lng: 9.168176651001}
         // https://api.mapbox.com/directions/v5/mapbox/walking/9.1824027,45.468503;9.168176651001,45.463964629396?overview=false&alternatives=true&steps=true&access_token=pk.eyJ1IjoiYW5kcmVpbGVjYTU1IiwiYSI6ImNseWFkdHA1aDBtbGkybnBoYTIzYzQ1NWgifQ.DVo1pX3PKKLbDeSVFlt-ZA
 
-        const marker_route = (marker) => {
-            const coord = marker.getCoordinates()
-            middleware.build_route(profile, { lat: coord.x, lng: coord.y }, latlng).then(res => {
+        const marker_route = (from) => {
+
+            // Coordinate {x: 9.182443359896899, y: 45.46849201625687, z: undefined}
+            // Coordinate {x: 9.16773930931748, y: 45.463395853440666, z: undefined}
+
+            middleware.build_route(profile, {from: {lng: from.x, lat: from.y}, to: latlng}).then(res => {
+            // middleware.build_route(profile, { lat: coord.x, lng: coord.y }, latlng).then(res => {
                 
                 
-                console.log({from: { lat: coord.x, lng: coord.y }, to: latlng})
+//                console.log({from: { lat: coord.x, lng: coord.y }, to: latlng})
                 console.log(res)
                 const routes = () => {
 
@@ -151,7 +159,7 @@ export class MaptalksUX {
 
                         line_coords.forEach( line_coord => {
 
-                            result.push([line_coord[0], line_coord[1], 0])
+                            result.push([line_coord[1], line_coord[0], 0])
                         })
                     })
 
@@ -198,9 +206,6 @@ export class MaptalksUX {
                 this.map.fitExtent(line.getExtent())
 
             })
-
-
-
         }
 
         const middleware = new MapBoxMiddleware()
@@ -212,7 +217,7 @@ export class MaptalksUX {
             let observer_id
             const tick = ( marker ) => {
                 if( marker ) {
-                    marker_route(this.myLocation.marker)
+                    marker_route(this.myLocation.marker.getCoordinates())
                     clearInterval(observer_id)
                 }
             }
@@ -235,8 +240,8 @@ export class MaptalksUX {
         const btn_cycling = content.querySelector('.btn-cycling')
         const btn_car = content.querySelector('.btn-car')
 
-        btn_walking.addEventListener('click', ev => this.build_routeing_path( {lat: coord.x, lng: coord.y}, 'mapbox/walking' ), false)
-        btn_cycling.addEventListener('click', ev => this.build_routeing_path( {lat: coord.x, lng: coord.y}, 'mapbox/cycling' ), false)
+        btn_walking.addEventListener('click', ev => this.build_routeing_path( {lat: coord.y, lng: coord.x}, 'mapbox/walking' ), false)
+        btn_cycling.addEventListener('click', ev => this.build_routeing_path( {lat: coord.y, lng: coord.x}, 'mapbox/cycling' ), false)
         btn_car.addEventListener('click', ev => this.build_routeing_path( coord, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')

@@ -12,7 +12,7 @@ export class MapBoxMiddleware {
 
 
 
-    build_route(profile, from = { lat, lng }, to = { lat, lng }) {
+    build_route(profile, { from = { lat, lng }, to = { lat, lng } }) {
 
         return new Promise((resolve, reject) => {
 
