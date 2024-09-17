@@ -1,15 +1,13 @@
 import { sendHttpReq } from "../../utils/api/http"
-import { decode, toGeoJSON, encode, fromGeoJSON } from "@mapbox/polyline"
+import { decode } from "@mapbox/polyline"
 
 
 export class MapBoxMiddleware {
-
+    
+    routeLineString;
 
     constructor() {
     }
-
-
-
 
 
     build_route(profile, { from = { lat, lng }, to = { lat, lng } }) {
@@ -30,13 +28,14 @@ export class MapBoxMiddleware {
 
                 const steps = res.routes[0].legs[0].steps
 
-                const result = []
+                let result = []
 
                 steps.forEach(step =>
-                    result.push(
-                        decode(step.geometry, 5)
-                    )
+                    result = [...result, ...decode(step.geometry, 5)]
                 )
+
+                // flip latitude e longitude
+                result = result.map((item, idx) => [].concat(result[idx]).reverse())
 
                 resolve(result)
             })

@@ -27,6 +27,7 @@ export class MaptalksUX {
 
     myLocation = {
         status: false,
+        need_extent: true,
         listener_ready: false,
         location: null,
         marker: null,
@@ -69,7 +70,7 @@ export class MaptalksUX {
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
         }
 
-        this.map.on('click', ev => console.log(ev.coordinate))
+        // this.map.on('click', ev => console.log(ev.coordinate))
     }
 
 
@@ -135,59 +136,11 @@ export class MaptalksUX {
 
     build_routeing_path( latlng, profile ) {
 
-        // 9.1824027,45.468503;9.168176651001,45.463964629396
-
-        // destinazione LatLng {lat: 45.463964629396, lng: 9.168176651001}
-        // https://api.mapbox.com/directions/v5/mapbox/walking/9.1824027,45.468503;9.168176651001,45.463964629396?overview=false&alternatives=true&steps=true&access_token=pk.eyJ1IjoiYW5kcmVpbGVjYTU1IiwiYSI6ImNseWFkdHA1aDBtbGkybnBoYTIzYzQ1NWgifQ.DVo1pX3PKKLbDeSVFlt-ZA
-
         const marker_route = (from) => {
 
-            // Coordinate {x: 9.182443359896899, y: 45.46849201625687, z: undefined}
-            // Coordinate {x: 9.16773930931748, y: 45.463395853440666, z: undefined}
-
-            middleware.build_route(profile, {from: {lng: from.x, lat: from.y}, to: latlng}).then(res => {
-            // middleware.build_route(profile, { lat: coord.x, lng: coord.y }, latlng).then(res => {
-                
-                
-//                console.log({from: { lat: coord.x, lng: coord.y }, to: latlng})
-                console.log(res)
-                const routes = () => {
-
-                    const result = []
-
-                    res.forEach(line_coords => {
-
-                        line_coords.forEach( line_coord => {
-
-                            result.push([line_coord[1], line_coord[0], 0])
-                        })
-                    })
-
-                    return result
-                }
-                
-                console.log(routes())
-
-                const route_coordinates = routes()
-
-                // const route = [{
-                //         coordinate: [120, 31, 0],
-                //         time: 301000
-                //     },
-                //     {
-                //         coordinate: [122, 32, 0],
-                //         time: 541000
-                //     },
-                //     //other coordinates
-                // ];
-                // const data = formatRouteData(routes(), { duration: 2000 * 60 * 10 })
-                // const player = new RoutePlayer(data, { speed: 4, debug: true });
-                // console.log(player);
-                // player.play();
+            middleware.build_route(profile, {from: {lng: from.x, lat: from.y}, to: latlng}).then(route_coordinates => {
 
                 const router_vector = new VectorLayer('line').addTo(this.map)
-
-                // console.log('player: ', player.getCoordinates())
 
                 const line = new LineString(route_coordinates, {
                     symbol: {
@@ -195,16 +148,11 @@ export class MaptalksUX {
                     }
                 })
 
-                
-                // const point = new Marker(player.getStartCoordinate(), {
-                //     zIndex: 1
-                // })
-                
                 line.addTo(router_vector)
-                // point.addTo(router_vector)
 
-                this.map.fitExtent(line.getExtent())
-
+                if( ! this.myLocation.need_extent ) {
+                    this.map.fitExtent(line.getExtent())
+                }
             })
         }
 
@@ -374,7 +322,8 @@ export class MaptalksUX {
             const circle = this.circular(coord, res.accuracy)
             this.myLocation.accuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
 
-            this.map.fitExtent(circle.getExtent())
+            this.myLocation.need_extent && this.map.fitExtent(circle.getExtent())
+            this.myLocation.need_extent = false
         }
     }
 
