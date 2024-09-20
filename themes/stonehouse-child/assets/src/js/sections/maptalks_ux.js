@@ -65,7 +65,7 @@ export class MaptalksUX {
         this.myLocation.location = new MyLocation()
         this.manageLocation = new ManageLocation(defaults)
         this.router.vector = new VectorLayer('line').addTo(this.map)
-
+        
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
         this.map.on('mouseup', () => clearTimeout(this.timerId))
@@ -76,6 +76,7 @@ export class MaptalksUX {
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
         }
 
+        this.map.sortLayers(['line', 'cluster'])
         // this.map.on('click', ev => console.log(ev.coordinate))
     }
 
