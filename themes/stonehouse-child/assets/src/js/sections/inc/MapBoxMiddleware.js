@@ -26,6 +26,8 @@ export class MapBoxMiddleware {
 
                 res = JSON.parse(res)
 
+                console.log(res)
+
                 const steps = res.routes[0].legs[0].steps
 
                 let result = []

@@ -35,6 +35,10 @@ export class MaptalksUX {
     };
 
     manageLocation;
+    router = {
+        vector: null,
+        selected_line: null,
+    };
 
     mouse_has_moved = null
     timerId = null
@@ -59,6 +63,7 @@ export class MaptalksUX {
 
         this.myLocation.location = new MyLocation()
         this.manageLocation = new ManageLocation(defaults)
+        this.router.vector = new VectorLayer('line').addTo(this.map)
 
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
@@ -138,9 +143,9 @@ export class MaptalksUX {
 
         const marker_route = (from) => {
 
-            middleware.build_route(profile, {from: {lng: from.x, lat: from.y}, to: latlng}).then(route_coordinates => {
+            this.router.selected_line && this.router.vector.removeGeometry(this.router.selected_line)
 
-                const router_vector = new VectorLayer('line').addTo(this.map)
+            middleware.build_route(profile, {from: {lng: from.x, lat: from.y}, to: latlng}).then(route_coordinates => {
 
                 const line = new LineString(route_coordinates, {
                     symbol: {
@@ -148,7 +153,8 @@ export class MaptalksUX {
                     }
                 })
 
-                line.addTo(router_vector)
+                line.addTo(this.router.vector)
+                this.router.selected_line = line
 
                 if( ! this.myLocation.need_extent ) {
                     this.map.fitExtent(line.getExtent())
@@ -159,20 +165,20 @@ export class MaptalksUX {
         const middleware = new MapBoxMiddleware()
         if ( ! this.myLocation.status ) {
 
-            this.start_location()
-
             // Observe Variable => this.myLocation.marker => for inescate route api request
             let observer_id
             const tick = ( marker ) => {
                 if( marker ) {
                     marker_route(this.myLocation.marker.getCoordinates())
                     clearInterval(observer_id)
+                } else {
+                    this.start_location()
                 }
             }
             observer_id = setInterval( () => tick(this.myLocation.marker), 10 )
 
         } else {
-            marker_route(this.myLocation.marker)
+            marker_route(this.myLocation.marker.getCoordinates())
         }
 
     }
