@@ -36,6 +36,7 @@ export class MaptalksUX {
 
     manageLocation;
     router = {
+        popup: null,
         vector: null,
         selected_line: null,
     };
@@ -185,6 +186,8 @@ export class MaptalksUX {
 
     click_saved_marker(ev) {
 
+        this.router.popup && this.router.popup.remove()
+
         const marker = ev.target
         const coord = marker.getCoordinates()
 
@@ -199,11 +202,11 @@ export class MaptalksUX {
         btn_car.addEventListener('click', ev => this.build_routeing_path( coord, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
-        const popup = this.set_html_marker( coord, content )
+        this.router.popup = this.set_html_marker( coord, content )
 
-        close.addEventListener('click', ev => popup.remove(), false)
+        close.addEventListener('click', ev => this.router.popup.remove(), false)
 
-        popup.addTo(this.map).show()
+        this.router.popup.addTo(this.map).show()
     }
 
 

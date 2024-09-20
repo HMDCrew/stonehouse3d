@@ -3,8 +3,7 @@ import { decode } from "@mapbox/polyline"
 
 
 export class MapBoxMiddleware {
-    
-    routeLineString;
+
 
     constructor() {
     }
@@ -26,7 +25,7 @@ export class MapBoxMiddleware {
 
                 res = JSON.parse(res)
 
-                console.log(res)
+                console.log(res.routes)
 
                 const steps = res.routes[0].legs[0].steps
 
