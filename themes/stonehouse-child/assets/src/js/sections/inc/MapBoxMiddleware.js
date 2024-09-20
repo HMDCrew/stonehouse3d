@@ -5,7 +5,31 @@ import { decode } from "@mapbox/polyline"
 export class MapBoxMiddleware {
 
 
-    constructor() {
+    constructor ( router, lineString, lineColor = 'red' ) {
+
+        this.router = router
+        this.lineString = lineString
+        this.lineColor = lineColor
+    }
+
+
+    line_route( profile, from, to ) {
+
+        return new Promise((resolve, reject) => {
+
+            this.router.selected_line && this.router.vector.removeGeometry(this.router.selected_line)
+    
+            this.build_route(profile, {from, to}).then(route_coordinates => {
+    
+                const line = new this.lineString(route_coordinates, {
+                    symbol: {
+                        lineColor: this.lineColor
+                    }
+                })
+
+                resolve(line)
+            })
+        })
     }
 
 

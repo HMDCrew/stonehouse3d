@@ -71,10 +71,8 @@ export class MaptalksUX {
         this.map.on('mouseup', () => clearTimeout(this.timerId))
 
         // Mobile Add Marker
-        if ( 'ontouchstart' in document.documentElement ) {
-
+        if ( 'ontouchstart' in document.documentElement )
             this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
-        }
 
         this.map.sortLayers(['line', 'cluster'])
         // this.map.on('click', ev => console.log(ev.coordinate))
@@ -141,49 +139,91 @@ export class MaptalksUX {
     }
 
 
-    build_routeing_path( latlng, profile ) {
+    start_navigation(ev) {
+        console.log(ev)
+    }
 
-        const marker_route = (from) => {
+    prepare_navigation( destination ) {
 
-            this.router.selected_line && this.router.vector.removeGeometry(this.router.selected_line)
+        // hide other markers
+        this.cluster.forEach( async marker => {
 
-            middleware.build_route(profile, {from: {lng: from.x, lat: from.y}, to: latlng}).then(route_coordinates => {
+            const coord = defaults.coord( marker.getCoordinates() )
 
-                const line = new LineString(route_coordinates, {
-                    symbol: {
-                        lineColor: 'red'
-                    }
-                })
+            if (
+                coord.lat !== destination.lat &&
+                coord.lng !== destination.lng
+            ) marker.hide()
+        })
 
-                line.addTo(this.router.vector)
-                this.router.selected_line = line
+        const dom = this.router.popup.getDOM()
+        const close = dom.querySelector('.close-btn')
 
-                if( ! this.myLocation.need_extent ) {
-                    this.map.fitExtent(line.getExtent())
-                }
-            })
-        }
+        const items_container = dom.querySelector('.routing-items')
+        items_container.querySelectorAll('.btn-routing').forEach(async item => item.remove())
+        items_container.classList.add('justify-around')
 
-        const middleware = new MapBoxMiddleware()
+        const btn_start_nav = createElementFromHTML( defaults.popupStartNavigation )
+        btn_start_nav.addEventListener('click', ev => this.start_navigation(ev), false)
+
+
+        close.addEventListener('click', ev => {
+
+            this.cluster.forEach( async marker => marker.show() )
+
+            this.router.vector.removeGeometry( this.router.selected_line )
+
+        }, false)
+
+        items_container.append( btn_start_nav )
+    }
+
+
+    draw_route( profile, from, to ) {
+
+        const middleware = new MapBoxMiddleware(this.router, LineString, 'red')
+
+        middleware.line_route( profile, from, to ).then(line => {
+
+            line.addTo(this.router.vector)
+
+            this.router.selected_line = line
+
+            ! this.myLocation.need_extent && this.map.fitExtent(line.getExtent())
+
+            this.prepare_navigation( to )
+        })
+    }
+
+
+    build_routeing_path( destination, profile ) {
+
         if ( ! this.myLocation.status ) {
+
+            ! this.myLocation.marker && this.start_location()
 
             // Observe Variable => this.myLocation.marker => for inescate route api request
             let observer_id
             const tick = ( marker ) => {
-                if( marker ) {
-                    marker_route(this.myLocation.marker.getCoordinates())
+
+                if ( marker ) {
+
+                    const coord = this.myLocation.marker.getCoordinates()
+
+                    this.draw_route( profile, defaults.coord(coord), destination )
                     clearInterval(observer_id)
-                } else {
-                    this.start_location()
                 }
             }
             observer_id = setInterval( () => tick(this.myLocation.marker), 10 )
 
         } else {
-            marker_route(this.myLocation.marker.getCoordinates())
-        }
 
+            const coord = this.myLocation.marker.getCoordinates()
+
+            this.draw_route( profile, defaults.coord(coord), destination )
+        }
     }
+
 
     click_saved_marker(ev) {
 
@@ -191,6 +231,7 @@ export class MaptalksUX {
 
         const marker = ev.target
         const coord = marker.getCoordinates()
+        const destination = defaults.coord(coord)
 
         const content = createElementFromHTML( defaults.popupRouting )
 
@@ -198,9 +239,9 @@ export class MaptalksUX {
         const btn_cycling = content.querySelector('.btn-cycling')
         const btn_car = content.querySelector('.btn-car')
 
-        btn_walking.addEventListener('click', ev => this.build_routeing_path( {lat: coord.y, lng: coord.x}, 'mapbox/walking' ), false)
-        btn_cycling.addEventListener('click', ev => this.build_routeing_path( {lat: coord.y, lng: coord.x}, 'mapbox/cycling' ), false)
-        btn_car.addEventListener('click', ev => this.build_routeing_path( coord, 'mapbox/driving-traffic' ), false)
+        btn_walking.addEventListener('click', ev => this.build_routeing_path( destination, 'mapbox/walking' ), false)
+        btn_cycling.addEventListener('click', ev => this.build_routeing_path( destination, 'mapbox/cycling' ), false)
+        btn_car.addEventListener('click', ev => this.build_routeing_path( destination, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
         this.router.popup = this.set_html_marker( coord, content )

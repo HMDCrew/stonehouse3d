@@ -1,6 +1,7 @@
 import walking from '../../images/walking.svg'
 import cycling from '../../images/cycling.svg'
 import car from '../../images/car.svg'
+import destination from '../../images/destination.svg'
 
 
 export const defaults = {
@@ -81,6 +82,12 @@ export const defaults = {
         </div>`
     ),
 
+    popupStartNavigation: (
+        `<button class="btn btn-routing btn-route">
+            <img src="${destination}">
+        </button>`
+    ),
+
     house_item: ( house_id, title, lat, lng ) => {
         return (
             `<div class="house" house-id="${house_id}">
@@ -107,5 +114,7 @@ export const defaults = {
                 </div>
             </div>`
         )
-    }
+    },
+
+    coord: (coord) => ({ lng: coord.x, lat: coord.y }),
 }
