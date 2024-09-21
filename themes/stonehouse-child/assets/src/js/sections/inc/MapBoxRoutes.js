@@ -1,26 +1,33 @@
 import { sendHttpReq } from "../../utils/api/http"
 import { decode } from "@mapbox/polyline"
-import { Route } from './Route'
+import { Route } from './elements/Route'
+import { coord } from "./items/coord"
+import { popupStartNavigation } from "./items/popupStartNavigation"
 
 export class MapBoxRoutes extends Route {
 
 
-    constructor ( LineVector, LineString, lineColor = 'red' ) {
+    constructor ({ map, cluster, location, gps, LineVector, LineString, createElementFromHTML, lineColor = 'red' }) {
 
         super( LineVector )
 
+        this.map = map
+        this.cluster = cluster
+        this.location = location
+        this.gps = gps
         this.LineString = LineString
+        this.createElementFromHTML = createElementFromHTML
         this.lineColor = lineColor
     }
 
 
-    line_route( profile, from, to ) {
+    lineRoute( profile, from, to ) {
 
         return new Promise((resolve, reject) => {
 
-            this.selected_line && this.routeVector.removeGeometry(this.selected_line)
+            this.selectedLine && this.routeVector.removeGeometry(this.selectedLine)
     
-            this.build_route(profile, {from, to}).then(route_coordinates => {
+            this.buildRoute(profile, {from, to}).then(route_coordinates => {
     
                 const line = new this.LineString(route_coordinates, {
                     symbol: {
@@ -34,7 +41,7 @@ export class MapBoxRoutes extends Route {
     }
 
 
-    build_route(profile, { from = { lat, lng }, to = { lat, lng } }) {
+    buildRoute(profile, { from = { lat, lng }, to = { lat, lng } }) {
 
         return new Promise((resolve, reject) => {
 
@@ -66,5 +73,102 @@ export class MapBoxRoutes extends Route {
                 resolve(result)
             })
         })
+    }
+
+
+
+
+    start_location() {
+
+        // Emit Event "MyPosition"
+        this.gps.watch()
+        this.gps.status = true
+    }
+
+
+
+
+
+    start_navigation(ev) {
+        console.log(ev)
+    }
+
+    prepare_navigation( destination ) {
+
+        // hide other markers
+        this.cluster.forEach( async marker => {
+
+            const marker_coord = coord( marker.getCoordinates() )
+
+            if (
+                marker_coord.lat !== destination.lat &&
+                marker_coord.lng !== destination.lng
+            ) marker.hide()
+        })
+
+        const dom = this.popup.getDOM()
+        const close = dom.querySelector('.close-btn')
+
+        const items_container = dom.querySelector('.routing-items')
+        items_container.querySelectorAll('.btn-routing').forEach(async item => item.remove())
+        items_container.classList.add('justify-around')
+
+        const btn_start_nav = this.createElementFromHTML( popupStartNavigation() )
+        btn_start_nav.addEventListener('click', ev => this.start_navigation(ev), false)
+
+
+        close.addEventListener('click', ev => {
+
+            this.cluster.forEach( async marker => marker.show() )
+
+            this.routeVector.removeGeometry( this.selectedLine )
+
+        }, false)
+
+        items_container.append( btn_start_nav )
+    }
+
+
+    draw_route( profile, from, to ) {
+
+        this.lineRoute( profile, from, to ).then(line => {
+
+            line.addTo(this.routeVector)
+
+            this.selectedLine = line
+
+            ! this.gps.need_extent && this.map.fitExtent(line.getExtent())
+
+            this.prepare_navigation( to )
+        })
+    }
+
+
+    build_routing_path( destination, profile ) {
+
+        if ( ! this.gps.status ) {
+
+            ! this.gps.marker && this.start_location()
+
+            // Observe Variable => this.gps.marker => for inescate route api request
+            let observer_id
+            const tick = ( marker ) => {
+
+                if ( marker ) {
+
+                    const gps_coord = this.gps.marker.getCoordinates()
+
+                    this.draw_route( profile, coord(gps_coord), destination )
+                    clearInterval(observer_id)
+                }
+            }
+            observer_id = setInterval( () => tick(this.gps.marker), 10 )
+
+        } else {
+
+            const gps_coord = this.gps.marker.getCoordinates()
+
+            this.draw_route( profile, coord(gps_coord), destination )
+        }
     }
 }

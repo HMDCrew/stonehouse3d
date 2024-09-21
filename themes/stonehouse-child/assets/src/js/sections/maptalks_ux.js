@@ -5,10 +5,10 @@ import { RoutePlayer, formatRouteData } from 'maptalks.routeplayer'
 
 import { defaults } from '../constants/defaults'
 import { GPS } from './inc/GPS'
-import { Route } from './inc/Route'
 import { ManageLocation } from './inc/ManageLocation'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxRoutes } from './inc/MapBoxRoutes'
+import { markerTemplate } from './inc/items/MarkerTemplate'
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
 // topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
@@ -25,8 +25,6 @@ export class MaptalksUX {
     cluster;
     baseLayer;
     menu;
-
-    manageLocation;
 
     mouse_has_moved = null
     timerId = null
@@ -49,11 +47,17 @@ export class MaptalksUX {
         this.menu.addTo(this.map)
         this.fix_empty_houses(stonehouse_data.locations)
 
-        this.gps = new GPS(this.map, defaults, this.set_html_marker, Coordinate, Polygon, VectorLayer)
-        this.manageLocation = new ManageLocation(defaults)
-        const line = new VectorLayer('line').addTo(this.map)
-        this.map_box = new MapBoxRoutes( line, LineString, 'red' )
-        
+        this.map_box = new MapBoxRoutes({
+            map: this.map,
+            gps: new GPS( this.map, this.set_html_marker, Coordinate, Polygon, VectorLayer ),
+            location: new ManageLocation( markerTemplate ),
+            cluster: this.cluster,
+            LineVector: new VectorLayer('line').addTo(this.map),
+            LineString,
+            createElementFromHTML,
+            lineColor: 'red'
+        })
+
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
         this.map.on('mouseup', () => clearTimeout(this.timerId))
@@ -127,90 +131,6 @@ export class MaptalksUX {
     }
 
 
-    start_navigation(ev) {
-        console.log(ev)
-    }
-
-    prepare_navigation( destination ) {
-
-        // hide other markers
-        this.cluster.forEach( async marker => {
-
-            const coord = defaults.coord( marker.getCoordinates() )
-
-            if (
-                coord.lat !== destination.lat &&
-                coord.lng !== destination.lng
-            ) marker.hide()
-        })
-
-        const dom = this.map_box.popup.getDOM()
-        const close = dom.querySelector('.close-btn')
-
-        const items_container = dom.querySelector('.routing-items')
-        items_container.querySelectorAll('.btn-routing').forEach(async item => item.remove())
-        items_container.classList.add('justify-around')
-
-        const btn_start_nav = createElementFromHTML( defaults.popupStartNavigation )
-        btn_start_nav.addEventListener('click', ev => this.start_navigation(ev), false)
-
-
-        close.addEventListener('click', ev => {
-
-            this.cluster.forEach( async marker => marker.show() )
-
-            this.map_box.routeVector.removeGeometry( this.map_box.selected_line )
-
-        }, false)
-
-        items_container.append( btn_start_nav )
-    }
-
-
-    draw_route( profile, from, to ) {
-
-        this.map_box.line_route( profile, from, to ).then(line => {
-
-            line.addTo(this.map_box.routeVector)
-
-            this.map_box.selected_line = line
-
-            ! this.gps.need_extent && this.map.fitExtent(line.getExtent())
-
-            this.prepare_navigation( to )
-        })
-    }
-
-
-    build_routing_path( destination, profile ) {
-
-        if ( ! this.gps.status ) {
-
-            ! this.gps.marker && this.start_location()
-
-            // Observe Variable => this.gps.marker => for inescate route api request
-            let observer_id
-            const tick = ( marker ) => {
-
-                if ( marker ) {
-
-                    const coord = this.gps.marker.getCoordinates()
-
-                    this.draw_route( profile, defaults.coord(coord), destination )
-                    clearInterval(observer_id)
-                }
-            }
-            observer_id = setInterval( () => tick(this.gps.marker), 10 )
-
-        } else {
-
-            const coord = this.gps.marker.getCoordinates()
-
-            this.draw_route( profile, defaults.coord(coord), destination )
-        }
-    }
-
-
     click_saved_marker(ev) {
 
         this.map_box.popup && this.map_box.popup.remove()
@@ -225,9 +145,9 @@ export class MaptalksUX {
         const btn_cycling = content.querySelector('.btn-cycling')
         const btn_car = content.querySelector('.btn-car')
 
-        btn_walking.addEventListener('click', ev => this.build_routing_path( destination, 'mapbox/walking' ), false)
-        btn_cycling.addEventListener('click', ev => this.build_routing_path( destination, 'mapbox/cycling' ), false)
-        btn_car.addEventListener('click', ev => this.build_routing_path( destination, 'mapbox/driving-traffic' ), false)
+        btn_walking.addEventListener('click', ev => this.map_box.build_routing_path( destination, 'mapbox/walking' ), false)
+        btn_cycling.addEventListener('click', ev => this.map_box.build_routing_path( destination, 'mapbox/cycling' ), false)
+        btn_car.addEventListener('click', ev => this.map_box.build_routing_path( destination, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
         this.map_box.popup = this.set_html_marker( coord, content )
@@ -256,12 +176,7 @@ export class MaptalksUX {
     }
 
 
-    start_location() {
-
-        // Emit Event "MyPosition"
-        this.gps.watch()
-        this.gps.status = true
-    }
+    
 
 
     init_menu() {
@@ -274,17 +189,17 @@ export class MaptalksUX {
                 {
                     item: defaults.menu.my_location,
                     click : () => {
-                        if ( !this.gps.status ) {
+                        if ( !this.map_box.gps.status ) {
 
-                            this.start_location()
+                            this.map_box.start_location()
                 
                         } else {
                 
-                            this.gps.status = false
-                            this.gps.marker.remove()
-                            this.gps.marker = null
-                            this.gps.accuracyLayer.remove()
-                            this.gps.stopWatch()
+                            this.map_box.gps.status = false
+                            this.map_box.gps.marker.remove()
+                            this.map_box.gps.marker = null
+                            this.map_box.gps.accuracyLayer.remove()
+                            this.map_box.gps.stopWatch()
                         }
                     }
                 },
@@ -310,14 +225,12 @@ export class MaptalksUX {
         else
             li.classList.remove('disabled')
     }
-
-
    
 
     set_marker(coordinate, type = 'default') {
 
         return new Marker( coordinate, {
-            'symbol' : defaults.marker(type)
+            'symbol' : markerTemplate(type)
         })
     }
 
@@ -335,7 +248,7 @@ export class MaptalksUX {
 
     save_location(marker, response) {
 
-        if ( this.manageLocation.locationSaved ) {
+        if ( this.map_box.location.locationSaved ) {
 
             if ( response.status === 'success' ) {
 
@@ -361,28 +274,28 @@ export class MaptalksUX {
 
     set_save_marker(coordinate) {
 
-        this.manageLocation.reset()
+        this.map_box.location.reset()
 
-        const saveLocation = this.manageLocation.saveLocation
+        const content = createElementFromHTML( defaults.popupSaveHose )
 
-        saveLocation.content = createElementFromHTML( defaults.popupSaveHose )
-        saveLocation.saveBtn = saveLocation.content.querySelector('.btn-add-house')
-        saveLocation.closeBtn = saveLocation.content.querySelector('.close-btn')
+        this.map_box.location.content = content
+        this.map_box.location.save = this.map_box.location.getSave()
+        this.map_box.location.close = this.map_box.location.getClose()
 
-        saveLocation.marker = this.set_marker(coordinate)
-        saveLocation.popup = this.set_html_marker(coordinate, saveLocation.content)
-        saveLocation.point = this.set_html_marker(coordinate, defaults.point_marker, 'middle')
+        this.map_box.location.marker = this.set_marker(coordinate)
+        this.map_box.location.popup = this.set_html_marker(coordinate, content)
+        this.map_box.location.point = this.set_html_marker(coordinate, defaults.point_marker, 'middle')
 
-        saveLocation.saveBtn.addEventListener('click', async ev => this.save_location(
-            saveLocation.marker,
-            await this.manageLocation.handle_create_location( coordinate, saveLocation.marker )
+        this.map_box.location.save.addEventListener('click', async ev => this.save_location(
+            this.map_box.location.marker,
+            await this.map_box.location.handle_create_location( coordinate, this.map_box.location.marker )
         ), false)
 
-        saveLocation.closeBtn.addEventListener('click', ev => this.manageLocation.reset(), false)
+        this.map_box.location.close.addEventListener('click', ev => this.map_box.location.reset(), false)
 
-        saveLocation.marker.addTo(this.cluster)
-        saveLocation.popup.addTo(this.map).show()
-        saveLocation.point.addTo(this.map).show()
+        this.map_box.location.marker.addTo(this.cluster)
+        this.map_box.location.popup.addTo(this.map).show()
+        this.map_box.location.point.addTo(this.map).show()
     }
 
 

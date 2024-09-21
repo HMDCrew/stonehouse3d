@@ -1,6 +1,7 @@
 import { toDegrees } from "../../utils/math/toDegrees.js"
 import { toRadians } from "../../utils/math/toRadians.js"
 import { customEvent } from "../../utils/customEvent.js"
+import { pointMarker } from "./items/PointMarker.js";
 
 
 const DEFAULT_RADIUS = 6371008.8;
@@ -9,10 +10,9 @@ export class GPS {
 
     watchPositionID
 
-    constructor(map, defaults, set_html_marker, Coordinate, Polygon, VectorLayer) {
+    constructor(map, set_html_marker, Coordinate, Polygon, VectorLayer) {
         
         this.map = map
-        this.defaults = defaults
         
         this.set_html_marker = set_html_marker
         
@@ -177,7 +177,7 @@ export class GPS {
 
             if( ! this.marker ) {
 
-                this.marker = this.set_html_marker(coord, this.defaults.point_marker, 'middle')
+                this.marker = this.set_html_marker(coord, pointMarker(), 'middle')
                 this.marker.addTo(this.map).show()
 
             } else {
