@@ -1,14 +1,15 @@
 import { sendHttpReq } from "../../utils/api/http"
 import { decode } from "@mapbox/polyline"
+import { Route } from './Route'
+
+export class MapBoxRoutes extends Route {
 
 
-export class MapBoxMiddleware {
+    constructor ( LineVector, LineString, lineColor = 'red' ) {
 
+        super( LineVector )
 
-    constructor ( router, lineString, lineColor = 'red' ) {
-
-        this.router = router
-        this.lineString = lineString
+        this.LineString = LineString
         this.lineColor = lineColor
     }
 
@@ -17,11 +18,11 @@ export class MapBoxMiddleware {
 
         return new Promise((resolve, reject) => {
 
-            this.router.selected_line && this.router.vector.removeGeometry(this.router.selected_line)
+            this.selected_line && this.routeVector.removeGeometry(this.selected_line)
     
             this.build_route(profile, {from, to}).then(route_coordinates => {
     
-                const line = new this.lineString(route_coordinates, {
+                const line = new this.LineString(route_coordinates, {
                     symbol: {
                         lineColor: this.lineColor
                     }

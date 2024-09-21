@@ -9,9 +9,16 @@ export class GPS {
 
     watchPositionID
 
-    constructor(Polygon) {
+    constructor(map, defaults, set_html_marker, Coordinate, Polygon, VectorLayer) {
         
+        this.map = map
+        this.defaults = defaults
+        
+        this.set_html_marker = set_html_marker
+        
+        this.Coordinate = Coordinate
         this.Polygon = Polygon
+        this.VectorLayer = VectorLayer
 
         this.status = false
         this.need_extent = true
@@ -158,4 +165,33 @@ export class GPS {
             }
         })
     }
+
+    location( ev ) {
+
+        const res = ev.detail
+
+        // fix browser on multiple click for geoloation on watching position
+        if( res?.lng && res?.lat ) {
+
+            const coord = new this.Coordinate([res.lng, res.lat]) 
+
+            if( ! this.marker ) {
+
+                this.marker = this.set_html_marker(coord, this.defaults.point_marker, 'middle')
+                this.marker.addTo(this.map).show()
+
+            } else {
+
+                this.marker.setCoordinates(coord)
+                this.accuracyLayer.remove()
+            }
+
+            const circle = this.circular(coord, res.accuracy)
+            this.accuracyLayer = new this.VectorLayer('vector', circle).addTo(this.map)
+
+            this.need_extent && this.map.fitExtent(circle.getExtent())
+            this.need_extent = false
+        }
+    }
+
 }

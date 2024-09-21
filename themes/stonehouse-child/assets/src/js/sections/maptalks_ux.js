@@ -8,7 +8,7 @@ import { GPS } from './inc/GPS'
 import { Route } from './inc/Route'
 import { ManageLocation } from './inc/ManageLocation'
 import { createElementFromHTML } from '../utils/dom_from_string'
-import { MapBoxMiddleware } from './inc/MapBoxMiddleware'
+import { MapBoxRoutes } from './inc/MapBoxRoutes'
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
 // topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
@@ -49,9 +49,10 @@ export class MaptalksUX {
         this.menu.addTo(this.map)
         this.fix_empty_houses(stonehouse_data.locations)
 
-        this.gps = new GPS(Polygon)
+        this.gps = new GPS(this.map, defaults, this.set_html_marker, Coordinate, Polygon, VectorLayer)
         this.manageLocation = new ManageLocation(defaults)
-        this.route = new Route(new VectorLayer('line').addTo(this.map))
+        const line = new VectorLayer('line').addTo(this.map)
+        this.map_box = new MapBoxRoutes( line, LineString, 'red' )
         
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
@@ -143,7 +144,7 @@ export class MaptalksUX {
             ) marker.hide()
         })
 
-        const dom = this.route.popup.getDOM()
+        const dom = this.map_box.popup.getDOM()
         const close = dom.querySelector('.close-btn')
 
         const items_container = dom.querySelector('.routing-items')
@@ -158,7 +159,7 @@ export class MaptalksUX {
 
             this.cluster.forEach( async marker => marker.show() )
 
-            this.route.vector.removeGeometry( this.route.selected_line )
+            this.map_box.routeVector.removeGeometry( this.map_box.selected_line )
 
         }, false)
 
@@ -168,13 +169,11 @@ export class MaptalksUX {
 
     draw_route( profile, from, to ) {
 
-        const middleware = new MapBoxMiddleware(this.route, LineString, 'red')
+        this.map_box.line_route( profile, from, to ).then(line => {
 
-        middleware.line_route( profile, from, to ).then(line => {
+            line.addTo(this.map_box.routeVector)
 
-            line.addTo(this.route.vector)
-
-            this.route.selected_line = line
+            this.map_box.selected_line = line
 
             ! this.gps.need_extent && this.map.fitExtent(line.getExtent())
 
@@ -214,7 +213,7 @@ export class MaptalksUX {
 
     click_saved_marker(ev) {
 
-        this.route.popup && this.route.popup.remove()
+        this.map_box.popup && this.map_box.popup.remove()
 
         const marker = ev.target
         const coord = marker.getCoordinates()
@@ -231,11 +230,11 @@ export class MaptalksUX {
         btn_car.addEventListener('click', ev => this.build_routing_path( destination, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
-        this.route.popup = this.set_html_marker( coord, content )
+        this.map_box.popup = this.set_html_marker( coord, content )
 
-        close.addEventListener('click', ev => this.route.popup.remove(), false)
+        close.addEventListener('click', ev => this.map_box.popup.remove(), false)
 
-        this.route.popup.addTo(this.map).show()
+        this.map_box.popup.addTo(this.map).show()
     }
 
 
@@ -313,34 +312,7 @@ export class MaptalksUX {
     }
 
 
-    location( ev ) {
-
-        const res = ev.detail
-
-        // fix browser on multiple click for geoloation on watching position
-        if( res?.lng && res?.lat ) {
-
-            const coord = new Coordinate([res.lng, res.lat]) 
-
-            if( ! this.gps.marker ) {
-
-                this.gps.marker = this.set_html_marker(coord, defaults.point_marker, 'middle')
-                this.gps.marker.addTo(this.map).show()
-
-            } else {
-
-                this.gps.marker.setCoordinates(coord)
-                this.gps.accuracyLayer.remove()
-            }
-
-            const circle = this.gps.circular(coord, res.accuracy)
-            this.gps.accuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
-
-            this.gps.need_extent && this.map.fitExtent(circle.getExtent())
-            this.gps.need_extent = false
-        }
-    }
-
+   
 
     set_marker(coordinate, type = 'default') {
 

@@ -1,10 +1,10 @@
 export class Route {
 
     popup = null
-    vector = null
+    routeVector = null
     selected_line = null
 
-    constructor(vector) {
-        this.vector = vector
+    constructor(routeVector) {
+        this.routeVector = routeVector
     }
 }
