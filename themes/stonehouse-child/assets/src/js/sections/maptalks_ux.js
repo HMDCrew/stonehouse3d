@@ -4,7 +4,7 @@ import { ClusterLayer } from 'maptalks.markercluster/dist/maptalks.markercluster
 import { RoutePlayer, formatRouteData } from 'maptalks.routeplayer'
 
 import { defaults } from '../constants/defaults'
-import { MyLocation } from './inc/MyLocation'
+import { GPS } from './inc/GPS'
 import { ManageLocation } from './inc/ManageLocation'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxMiddleware } from './inc/MapBoxMiddleware'
@@ -28,14 +28,13 @@ export class MaptalksUX {
     myLocation = {
         status: false,
         need_extent: true,
-        listener_ready: false,
-        location: null,
+        gps: null,
         marker: null,
         accuracyLayer: null
     };
 
     manageLocation;
-    router = {
+    route = {
         popup: null,
         vector: null,
         selected_line: null,
@@ -62,9 +61,9 @@ export class MaptalksUX {
         this.menu.addTo(this.map)
         this.fix_empty_houses(stonehouse_data.locations)
 
-        this.myLocation.location = new MyLocation()
+        this.myLocation.gps = new GPS(Polygon)
         this.manageLocation = new ManageLocation(defaults)
-        this.router.vector = new VectorLayer('line').addTo(this.map)
+        this.route.vector = new VectorLayer('line').addTo(this.map)
         
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
@@ -156,7 +155,7 @@ export class MaptalksUX {
             ) marker.hide()
         })
 
-        const dom = this.router.popup.getDOM()
+        const dom = this.route.popup.getDOM()
         const close = dom.querySelector('.close-btn')
 
         const items_container = dom.querySelector('.routing-items')
@@ -171,7 +170,7 @@ export class MaptalksUX {
 
             this.cluster.forEach( async marker => marker.show() )
 
-            this.router.vector.removeGeometry( this.router.selected_line )
+            this.route.vector.removeGeometry( this.route.selected_line )
 
         }, false)
 
@@ -181,13 +180,13 @@ export class MaptalksUX {
 
     draw_route( profile, from, to ) {
 
-        const middleware = new MapBoxMiddleware(this.router, LineString, 'red')
+        const middleware = new MapBoxMiddleware(this.route, LineString, 'red')
 
         middleware.line_route( profile, from, to ).then(line => {
 
-            line.addTo(this.router.vector)
+            line.addTo(this.route.vector)
 
-            this.router.selected_line = line
+            this.route.selected_line = line
 
             ! this.myLocation.need_extent && this.map.fitExtent(line.getExtent())
 
@@ -196,7 +195,7 @@ export class MaptalksUX {
     }
 
 
-    build_routeing_path( destination, profile ) {
+    build_routing_path( destination, profile ) {
 
         if ( ! this.myLocation.status ) {
 
@@ -227,7 +226,7 @@ export class MaptalksUX {
 
     click_saved_marker(ev) {
 
-        this.router.popup && this.router.popup.remove()
+        this.route.popup && this.route.popup.remove()
 
         const marker = ev.target
         const coord = marker.getCoordinates()
@@ -239,16 +238,16 @@ export class MaptalksUX {
         const btn_cycling = content.querySelector('.btn-cycling')
         const btn_car = content.querySelector('.btn-car')
 
-        btn_walking.addEventListener('click', ev => this.build_routeing_path( destination, 'mapbox/walking' ), false)
-        btn_cycling.addEventListener('click', ev => this.build_routeing_path( destination, 'mapbox/cycling' ), false)
-        btn_car.addEventListener('click', ev => this.build_routeing_path( destination, 'mapbox/driving-traffic' ), false)
+        btn_walking.addEventListener('click', ev => this.build_routing_path( destination, 'mapbox/walking' ), false)
+        btn_cycling.addEventListener('click', ev => this.build_routing_path( destination, 'mapbox/cycling' ), false)
+        btn_car.addEventListener('click', ev => this.build_routing_path( destination, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
-        this.router.popup = this.set_html_marker( coord, content )
+        this.route.popup = this.set_html_marker( coord, content )
 
-        close.addEventListener('click', ev => this.router.popup.remove(), false)
+        close.addEventListener('click', ev => this.route.popup.remove(), false)
 
-        this.router.popup.addTo(this.map).show()
+        this.route.popup.addTo(this.map).show()
     }
 
 
@@ -272,14 +271,8 @@ export class MaptalksUX {
 
     start_location() {
 
-        if( ! this.myLocation.listener_ready ) {
-
-            document.addEventListener('MyPosition', ev => this.location(ev))
-            this.myLocation.listener_ready = true
-        }
-
         // Emit Event "MyPosition"
-        this.myLocation.location.watch()
+        this.myLocation.gps.watch()
         this.myLocation.status = true
     }
 
@@ -304,7 +297,7 @@ export class MaptalksUX {
                             this.myLocation.marker.remove()
                             this.myLocation.marker = null
                             this.myLocation.accuracyLayer.remove()
-                            this.myLocation.location.stopWatch()
+                            this.myLocation.gps.stopWatch()
                         }
                     }
                 },
@@ -332,24 +325,6 @@ export class MaptalksUX {
     }
 
 
-    circular(center, radius) {
-        return new Polygon([ this.myLocation.location.circular(center, radius) ], {
-            visible : true,
-            editable : true,
-            cursor : 'pointer',
-            draggable : false,
-            dragShadow : false, // display a shadow during dragging
-            drawOnAxis : null,  // force dragging stick on a axis, can be: x, y
-            symbol: {
-                'lineColor' : '#34495e',
-                'lineWidth' : 2,
-                'polygonFill' : 'rgb(135,196,240)',
-                'polygonOpacity' : 0.4
-            }
-        })
-    }
-
-
     location( ev ) {
 
         const res = ev.detail
@@ -370,7 +345,7 @@ export class MaptalksUX {
                 this.myLocation.accuracyLayer.remove()
             }
 
-            const circle = this.circular(coord, res.accuracy)
+            const circle = this.myLocation.gps.circular(coord, res.accuracy)
             this.myLocation.accuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
 
             this.myLocation.need_extent && this.map.fitExtent(circle.getExtent())

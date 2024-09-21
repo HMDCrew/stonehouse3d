@@ -5,11 +5,16 @@ import { customEvent } from "../../utils/customEvent.js"
 
 const DEFAULT_RADIUS = 6371008.8;
 
-export class MyLocation {
+export class GPS {
 
     watchPositionID
 
-    constructor() {}
+    constructor(Polygon) {
+        
+        this.Polygon = Polygon
+
+        document.addEventListener('MyPosition', ev => this.location(ev))
+    }
 
     circular(center, radius, n, sphereRadius) {
         n = n ? n : 32;
@@ -26,7 +31,20 @@ export class MyLocation {
 
         flatCoordinates.push(flatCoordinates[0])
 
-        return flatCoordinates
+        return new this.Polygon([ flatCoordinates ], {
+            visible : true,
+            editable : true,
+            cursor : 'pointer',
+            draggable : false,
+            dragShadow : false, // display a shadow during dragging
+            drawOnAxis : null,  // force dragging stick on a axis, can be: x, y
+            symbol: {
+                'lineColor' : '#34495e',
+                'lineWidth' : 2,
+                'polygonFill' : 'rgb(135,196,240)',
+                'polygonOpacity' : 0.4
+            }
+        })
     }
 
     /**
