@@ -13,6 +13,11 @@ export class GPS {
         
         this.Polygon = Polygon
 
+        this.status = false
+        this.need_extent = true
+        this.marker = null
+        this.accuracyLayer = null
+
         document.addEventListener('MyPosition', ev => this.location(ev))
     }
 

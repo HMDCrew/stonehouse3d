@@ -5,6 +5,7 @@ import { RoutePlayer, formatRouteData } from 'maptalks.routeplayer'
 
 import { defaults } from '../constants/defaults'
 import { GPS } from './inc/GPS'
+import { Route } from './inc/Route'
 import { ManageLocation } from './inc/ManageLocation'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxMiddleware } from './inc/MapBoxMiddleware'
@@ -25,20 +26,7 @@ export class MaptalksUX {
     baseLayer;
     menu;
 
-    myLocation = {
-        status: false,
-        need_extent: true,
-        gps: null,
-        marker: null,
-        accuracyLayer: null
-    };
-
     manageLocation;
-    route = {
-        popup: null,
-        vector: null,
-        selected_line: null,
-    };
 
     mouse_has_moved = null
     timerId = null
@@ -61,9 +49,9 @@ export class MaptalksUX {
         this.menu.addTo(this.map)
         this.fix_empty_houses(stonehouse_data.locations)
 
-        this.myLocation.gps = new GPS(Polygon)
+        this.gps = new GPS(Polygon)
         this.manageLocation = new ManageLocation(defaults)
-        this.route.vector = new VectorLayer('line').addTo(this.map)
+        this.route = new Route(new VectorLayer('line').addTo(this.map))
         
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
@@ -188,7 +176,7 @@ export class MaptalksUX {
 
             this.route.selected_line = line
 
-            ! this.myLocation.need_extent && this.map.fitExtent(line.getExtent())
+            ! this.gps.need_extent && this.map.fitExtent(line.getExtent())
 
             this.prepare_navigation( to )
         })
@@ -197,27 +185,27 @@ export class MaptalksUX {
 
     build_routing_path( destination, profile ) {
 
-        if ( ! this.myLocation.status ) {
+        if ( ! this.gps.status ) {
 
-            ! this.myLocation.marker && this.start_location()
+            ! this.gps.marker && this.start_location()
 
-            // Observe Variable => this.myLocation.marker => for inescate route api request
+            // Observe Variable => this.gps.marker => for inescate route api request
             let observer_id
             const tick = ( marker ) => {
 
                 if ( marker ) {
 
-                    const coord = this.myLocation.marker.getCoordinates()
+                    const coord = this.gps.marker.getCoordinates()
 
                     this.draw_route( profile, defaults.coord(coord), destination )
                     clearInterval(observer_id)
                 }
             }
-            observer_id = setInterval( () => tick(this.myLocation.marker), 10 )
+            observer_id = setInterval( () => tick(this.gps.marker), 10 )
 
         } else {
 
-            const coord = this.myLocation.marker.getCoordinates()
+            const coord = this.gps.marker.getCoordinates()
 
             this.draw_route( profile, defaults.coord(coord), destination )
         }
@@ -272,8 +260,8 @@ export class MaptalksUX {
     start_location() {
 
         // Emit Event "MyPosition"
-        this.myLocation.gps.watch()
-        this.myLocation.status = true
+        this.gps.watch()
+        this.gps.status = true
     }
 
 
@@ -287,17 +275,17 @@ export class MaptalksUX {
                 {
                     item: defaults.menu.my_location,
                     click : () => {
-                        if ( !this.myLocation.status ) {
+                        if ( !this.gps.status ) {
 
                             this.start_location()
                 
                         } else {
                 
-                            this.myLocation.status = false
-                            this.myLocation.marker.remove()
-                            this.myLocation.marker = null
-                            this.myLocation.accuracyLayer.remove()
-                            this.myLocation.gps.stopWatch()
+                            this.gps.status = false
+                            this.gps.marker.remove()
+                            this.gps.marker = null
+                            this.gps.accuracyLayer.remove()
+                            this.gps.stopWatch()
                         }
                     }
                 },
@@ -334,22 +322,22 @@ export class MaptalksUX {
 
             const coord = new Coordinate([res.lng, res.lat]) 
 
-            if( ! this.myLocation.marker ) {
+            if( ! this.gps.marker ) {
 
-                this.myLocation.marker = this.set_html_marker(coord, defaults.point_marker, 'middle')
-                this.myLocation.marker.addTo(this.map).show()
+                this.gps.marker = this.set_html_marker(coord, defaults.point_marker, 'middle')
+                this.gps.marker.addTo(this.map).show()
 
             } else {
 
-                this.myLocation.marker.setCoordinates(coord)
-                this.myLocation.accuracyLayer.remove()
+                this.gps.marker.setCoordinates(coord)
+                this.gps.accuracyLayer.remove()
             }
 
-            const circle = this.myLocation.gps.circular(coord, res.accuracy)
-            this.myLocation.accuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
+            const circle = this.gps.circular(coord, res.accuracy)
+            this.gps.accuracyLayer = new VectorLayer('vector', circle).addTo(this.map)
 
-            this.myLocation.need_extent && this.map.fitExtent(circle.getExtent())
-            this.myLocation.need_extent = false
+            this.gps.need_extent && this.map.fitExtent(circle.getExtent())
+            this.gps.need_extent = false
         }
     }
 
