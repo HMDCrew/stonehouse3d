@@ -10,7 +10,7 @@ export class GPS {
 
     watchPositionID
 
-    constructor(map, set_html_marker, Coordinate, Polygon, VectorLayer) {
+    constructor({ map, set_html_marker, Coordinate, Polygon, VectorLayer }) {
         
         this.map = map
         

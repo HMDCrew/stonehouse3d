@@ -9,6 +9,7 @@ import { ManageLocation } from './inc/ManageLocation'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxRoutes } from './inc/MapBoxRoutes'
 import { markerTemplate } from './inc/items/MarkerTemplate'
+import { coord } from "./inc/items/coord"
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
 // topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
@@ -33,7 +34,6 @@ export class MaptalksUX {
     constructor(initial_location) {
 
         this.mapContainer = document.querySelector('.maps')
-        this.details = document.querySelector('.details')
 
         this.map = this.init_map(initial_location)
         
@@ -41,27 +41,41 @@ export class MaptalksUX {
         this.cluster = new ClusterLayer('cluster').addTo(this.map)
         this.cluster.config('animationDuration', 1)
 
-        this.init_saved_hauses(stonehouse_data)
-
         this.menu = this.init_menu()
         this.menu.addTo(this.map)
-        this.fix_empty_houses(stonehouse_data.locations)
 
-        // JS DOM reorganization on progress.... 
+
+        // JS DOM reorganization on progress....
         this.map_box = new MapBoxRoutes({
             map: this.map,
             cluster: this.cluster,
-            location: new ManageLocation({
+            gps: new GPS({
                 map: this.map,
-                cluster: this.cluster,
-                markerTemplate
+                set_html_marker: this.set_html_marker,
+                Coordinate,
+                Polygon,
+                VectorLayer
             }),
-            gps: new GPS( this.map, this.set_html_marker, Coordinate, Polygon, VectorLayer ),
-            LineVector: new VectorLayer('line').addTo(this.map),
+            LineVector: new VectorLayer( 'line' ).addTo( this.map ),
             LineString,
             createElementFromHTML,
+            coord,
             lineColor: 'red'
         })
+
+        this.location = new ManageLocation({
+            map: this.map,
+            menu: this.menu,
+            cluster: this.cluster,
+            map_box: this.map_box,
+            Coordinate,
+            markerTemplate,
+            coord,
+            createElementFromHTML,
+            set_marker: this.set_marker,
+            set_html_marker: this.set_html_marker
+        })
+
 
         this.map.on('mousedown', ev => this.add_marker_long_press(ev))
         this.map.on('mousemove', () => this.mouse_has_moved = true)
@@ -69,7 +83,7 @@ export class MaptalksUX {
 
         // Mobile Add Marker
         if ( 'ontouchstart' in document.documentElement )
-            this.map.on('contextmenu', e => this.set_save_marker( e.coordinate ))
+            this.map.on('contextmenu', e => this.location.set_save_marker( e.coordinate ))
 
         this.map.sortLayers(['line', 'cluster'])
         // this.map.on('click', ev => console.log(ev.coordinate))
@@ -91,58 +105,6 @@ export class MaptalksUX {
         })
     }
 
-
-    saved_houses_listeners() {
-
-        const houses = this.details.querySelectorAll('.house')
-
-        houses.forEach( item => this.map_box.location.listenHoverItemMarker( item ) )
-    }
-
-
-    click_saved_marker(ev) {
-
-        this.map_box.popup && this.map_box.popup.remove()
-
-        const marker = ev.target
-        const coord = marker.getCoordinates()
-        const destination = defaults.coord(coord)
-
-        const content = createElementFromHTML( defaults.popupRouting )
-
-        const btn_walking = content.querySelector('.btn-walking')
-        const btn_cycling = content.querySelector('.btn-cycling')
-        const btn_car = content.querySelector('.btn-car')
-
-        btn_walking.addEventListener('click', ev => this.map_box.buildRoutingPath( destination, 'mapbox/walking' ), false)
-        btn_cycling.addEventListener('click', ev => this.map_box.buildRoutingPath( destination, 'mapbox/cycling' ), false)
-        btn_car.addEventListener('click', ev => this.map_box.buildRoutingPath( destination, 'mapbox/driving-traffic' ), false)
-
-        const close = content.querySelector('.close-btn')
-        this.map_box.popup = this.set_html_marker( coord, content )
-
-        close.addEventListener('click', ev => this.map_box.popup.remove(), false)
-
-        this.map_box.popup.addTo(this.map).show()
-    }
-
-
-    init_saved_hauses(houses) {
-
-        const add_saved_marker = (item) => {
-
-            const {lat, lng} = item.location
-            const coord = new Coordinate([lat, lng])
-
-            const marker = this.set_marker(coord, 'success')
-            marker.on('click', ev => this.click_saved_marker(ev))
-            marker.addTo(this.cluster)
-        }
-
-        Object.values(houses.locations).forEach( async item => add_saved_marker(item) )
-
-        this.saved_houses_listeners()
-    }
 
 
     init_menu() {
@@ -180,17 +142,7 @@ export class MaptalksUX {
     }
 
 
-    fix_empty_houses(locations) {
-
-        let menu_dom = this.menu.getDOM()
-        const li = menu_dom.querySelector('#houses-svg-icon').closest('li')
-
-        if ( ! locations.length )
-            li.classList.add('disabled')
-
-        else
-            li.classList.remove('disabled')
-    }
+    
    
 
     set_marker(coordinate, type = 'default') {
@@ -217,58 +169,6 @@ export class MaptalksUX {
 
 
 
-    save_location(marker, response) {
-
-        if ( this.map_box.location.locationSaved ) {
-
-            if ( response.status === 'success' ) {
-
-                const item = createElementFromHTML(
-                    defaults.house_item(
-                        response.message.id,
-                        response.message.title,
-                        response.message.location.lat,
-                        response.message.location.lng
-                    )
-                )
-
-                this.map_box.location.listenHoverItemMarker( item )
-                marker.addTo(this.cluster)
-                marker.on('click', ev => this.click_saved_marker(ev))
-                this.details.append(item)
-            }
-
-            this.fix_empty_houses([true])
-        }
-    }
-
-
-    set_save_marker(coordinate) {
-
-        this.map_box.location.reset()
-
-        const content = createElementFromHTML( defaults.popupSaveHose )
-
-        this.map_box.location.content = content
-        this.map_box.location.save = this.map_box.location.getSave()
-        this.map_box.location.close = this.map_box.location.getClose()
-
-        this.map_box.location.marker = this.set_marker(coordinate)
-        this.map_box.location.popup = this.set_html_marker(coordinate, content)
-        this.map_box.location.point = this.set_html_marker(coordinate, defaults.point_marker, 'middle')
-
-        this.map_box.location.save.addEventListener('click', async ev => this.save_location(
-            this.map_box.location.marker,
-            await this.map_box.location.handle_create_location( coordinate, this.map_box.location.marker )
-        ), false)
-
-        this.map_box.location.close.addEventListener('click', ev => this.map_box.location.reset(), false)
-
-        this.map_box.location.marker.addTo(this.cluster)
-        this.map_box.location.popup.addTo(this.map).show()
-        this.map_box.location.point.addTo(this.map).show()
-    }
-
 
 
 
@@ -280,7 +180,7 @@ export class MaptalksUX {
 
             if ( ! this.mouse_has_moved ) {
                 // console.log(e.coordinate)
-                this.set_save_marker( e.coordinate )
+                this.location.set_save_marker( e.coordinate )
             }
         }, 800)
 

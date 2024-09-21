@@ -1,22 +1,21 @@
 import { sendHttpReq } from "../../utils/api/http"
 import { decode } from "@mapbox/polyline"
 import { Route } from './elements/Route'
-import { coord } from "./items/coord"
-import { popupStartNavigation } from "./items/popupStartNavigation"
+import { popupStartNavigation } from "./items/popups/startNavigation"
 
 export class MapBoxRoutes extends Route {
 
 
-    constructor ({ map, cluster, location, gps, LineVector, LineString, createElementFromHTML, lineColor = 'red' }) {
+    constructor ({ map, cluster, gps, LineVector, LineString, createElementFromHTML, coord, lineColor = 'red' }) {
 
         super( LineVector )
 
         this.map = map
         this.cluster = cluster
-        this.location = location
         this.gps = gps
         this.LineString = LineString
         this.createElementFromHTML = createElementFromHTML
+        this.coord = coord
         this.lineColor = lineColor
     }
 
@@ -86,7 +85,7 @@ export class MapBoxRoutes extends Route {
         // hide other markers
         this.cluster.forEach( async marker => {
 
-            const markerCoord = coord( marker.getCoordinates() )
+            const markerCoord = this.coord( marker.getCoordinates() )
 
             if (
                 markerCoord.lat !== destination.lat &&
@@ -146,7 +145,7 @@ export class MapBoxRoutes extends Route {
 
                     const gps_coord = this.gps.marker.getCoordinates()
 
-                    this.drawRoute( profile, coord(gps_coord), destination )
+                    this.drawRoute( profile, this.coord(gps_coord), destination )
                     clearInterval(observerId)
                 }
             }
@@ -156,7 +155,7 @@ export class MapBoxRoutes extends Route {
 
             const gps_coord = this.gps.marker.getCoordinates()
 
-            this.drawRoute( profile, coord(gps_coord), destination )
+            this.drawRoute( profile, this.coord(gps_coord), destination )
         }
     }
 }
