@@ -47,11 +47,16 @@ export class MaptalksUX {
         this.menu.addTo(this.map)
         this.fix_empty_houses(stonehouse_data.locations)
 
+        // JS DOM reorganization on progress.... 
         this.map_box = new MapBoxRoutes({
             map: this.map,
-            gps: new GPS( this.map, this.set_html_marker, Coordinate, Polygon, VectorLayer ),
-            location: new ManageLocation( markerTemplate ),
             cluster: this.cluster,
+            location: new ManageLocation({
+                map: this.map,
+                cluster: this.cluster,
+                markerTemplate
+            }),
+            gps: new GPS( this.map, this.set_html_marker, Coordinate, Polygon, VectorLayer ),
             LineVector: new VectorLayer('line').addTo(this.map),
             LineString,
             createElementFromHTML,
@@ -87,47 +92,11 @@ export class MaptalksUX {
     }
 
 
-    focus_house_marker( item_coord, marker_coord ) {
-
-        const lat_length = item_coord.lat.toString().split(".")[1].length
-        const lng_length = item_coord.lng.toString().split(".")[1].length
-
-        if (
-            item_coord.lat === parseFloat(marker_coord.x.toFixed(lat_length)) &&
-            item_coord.lng === parseFloat(marker_coord.y.toFixed(lng_length))
-        ) {
-            
-            this.map.animateTo({
-                center: marker_coord,
-                zoom: 13,
-            }, {
-                duration: 800
-            })
-        }
-    }
-
-
-    listen_hover_item_marker( item ) {
-
-        const item_coord = {
-            lat: parseFloat( item.querySelector('.location .lat').getAttribute('lat') ),
-            lng: parseFloat( item.querySelector('.location .lng').getAttribute('lng') ),
-        }
-
-        item.addEventListener('mouseenter', ev => 
-
-            this.cluster.forEach( async marker => 
-                this.focus_house_marker( item_coord, marker.getCoordinates() )
-            )
-        )
-    }
-
-
     saved_houses_listeners() {
 
         const houses = this.details.querySelectorAll('.house')
 
-        houses.forEach( item => this.listen_hover_item_marker( item ) )
+        houses.forEach( item => this.map_box.location.listenHoverItemMarker( item ) )
     }
 
 
@@ -145,9 +114,9 @@ export class MaptalksUX {
         const btn_cycling = content.querySelector('.btn-cycling')
         const btn_car = content.querySelector('.btn-car')
 
-        btn_walking.addEventListener('click', ev => this.map_box.build_routing_path( destination, 'mapbox/walking' ), false)
-        btn_cycling.addEventListener('click', ev => this.map_box.build_routing_path( destination, 'mapbox/cycling' ), false)
-        btn_car.addEventListener('click', ev => this.map_box.build_routing_path( destination, 'mapbox/driving-traffic' ), false)
+        btn_walking.addEventListener('click', ev => this.map_box.buildRoutingPath( destination, 'mapbox/walking' ), false)
+        btn_cycling.addEventListener('click', ev => this.map_box.buildRoutingPath( destination, 'mapbox/cycling' ), false)
+        btn_car.addEventListener('click', ev => this.map_box.buildRoutingPath( destination, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
         this.map_box.popup = this.set_html_marker( coord, content )
@@ -176,9 +145,6 @@ export class MaptalksUX {
     }
 
 
-    
-
-
     init_menu() {
         return new control.Toolbar({
             'vertical' : true,
@@ -191,7 +157,7 @@ export class MaptalksUX {
                     click : () => {
                         if ( !this.map_box.gps.status ) {
 
-                            this.map_box.start_location()
+                            this.map_box.gps.startLocation()
                 
                         } else {
                 
@@ -246,6 +212,11 @@ export class MaptalksUX {
     }
 
 
+
+
+
+
+
     save_location(marker, response) {
 
         if ( this.map_box.location.locationSaved ) {
@@ -261,7 +232,7 @@ export class MaptalksUX {
                     )
                 )
 
-                this.listen_hover_item_marker( item )
+                this.map_box.location.listenHoverItemMarker( item )
                 marker.addTo(this.cluster)
                 marker.on('click', ev => this.click_saved_marker(ev))
                 this.details.append(item)
@@ -297,6 +268,10 @@ export class MaptalksUX {
         this.map_box.location.popup.addTo(this.map).show()
         this.map_box.location.point.addTo(this.map).show()
     }
+
+
+
+
 
 
     add_marker_long_press( e ) {

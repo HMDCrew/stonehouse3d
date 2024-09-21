@@ -4,12 +4,20 @@ import { Location } from './elements/Location'
 
 export class ManageLocation extends Location {
 
+
     locationSaved = false
 
-    constructor(markerTemplate) {
+
+    constructor({ map, cluster, markerTemplate }) {
+
         super()
+
+        this.map = map
+        this.cluster = cluster
+
         this.markerTemplate = markerTemplate
     }
+
 
     reset() {
 
@@ -27,6 +35,7 @@ export class ManageLocation extends Location {
         this.marker = null,
         this.point = null
     }
+
 
     handle_create_location = async ( coordinate, marker ) => {
 
@@ -60,4 +69,45 @@ export class ManageLocation extends Location {
 
         return reponse
     }
+
+
+
+    focusLocationMarker( itemCoord, markerCoord ) {
+
+        const lat_length = itemCoord.lat.toString().split(".")[1].length
+        const lng_length = itemCoord.lng.toString().split(".")[1].length
+
+        if (
+            itemCoord.lat === parseFloat(markerCoord.x.toFixed(lat_length)) &&
+            itemCoord.lng === parseFloat(markerCoord.y.toFixed(lng_length))
+        ) {
+            
+            this.map.animateTo({
+                center: markerCoord,
+                zoom: 13,
+            }, {
+                duration: 800
+            })
+        }
+    }
+
+
+    listenHoverItemMarker( item ) {
+
+        const itemCoord = {
+            lat: parseFloat( item.querySelector('.location .lat').getAttribute('lat') ),
+            lng: parseFloat( item.querySelector('.location .lng').getAttribute('lng') ),
+        }
+
+        item.addEventListener('mouseenter', ev => 
+
+            this.cluster.forEach( async marker => 
+                this.focusLocationMarker( itemCoord, marker.getCoordinates() )
+            )
+        )
+    }
+
+
+
+    
 }

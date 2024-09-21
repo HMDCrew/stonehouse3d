@@ -28,6 +28,15 @@ export class GPS {
         document.addEventListener('MyPosition', ev => this.location(ev))
     }
 
+
+    startLocation() {
+
+        // Emit Event "MyPosition"
+        this.watch()
+        this.status = true
+    }
+
+
     circular(center, radius, n, sphereRadius) {
         n = n ? n : 32;
 
@@ -165,6 +174,7 @@ export class GPS {
             }
         })
     }
+
 
     location( ev ) {
 
