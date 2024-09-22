@@ -2,6 +2,7 @@ import { sendHttpReq } from "../../utils/api/http"
 import { decode } from "@mapbox/polyline"
 import { Route } from './elements/Route'
 import { popupStartNavigation } from "./items/popups/startNavigation"
+import { ViewNovigator } from './ViewNovigator'
 
 export class MapBoxRoutes extends Route {
 
@@ -13,6 +14,11 @@ export class MapBoxRoutes extends Route {
         this.map = map
         this.cluster = cluster
         this.gps = gps
+        this.navigator = new ViewNovigator({
+            map: this.map,
+            gps: this.gps
+        })
+
         this.LineString = LineString
         this.createElementFromHTML = createElementFromHTML
         this.coord = coord
@@ -97,10 +103,6 @@ export class MapBoxRoutes extends Route {
     }
 
 
-    startNavigation(ev) {
-        console.log(ev)
-    }
-
 
     prepareNavigation( destination ) {
 
@@ -123,7 +125,7 @@ export class MapBoxRoutes extends Route {
         items.classList.add('justify-around')
 
         const start_nav = this.createElementFromHTML( popupStartNavigation() )
-        start_nav.addEventListener('click', ev => this.startNavigation(ev), false)
+        start_nav.addEventListener('click', ev => this.navigator.startNavigation(ev), false)
 
 
         close.addEventListener('click', ev => {

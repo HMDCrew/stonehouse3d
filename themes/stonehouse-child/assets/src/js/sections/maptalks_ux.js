@@ -1,7 +1,6 @@
 // import * as maptalks from 'maptalks'
 import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate, Marker, LineString } from 'maptalks'
 import { ClusterLayer } from 'maptalks.markercluster/dist/maptalks.markercluster'
-import { RoutePlayer, formatRouteData } from 'maptalks.routeplayer'
 
 import { defaults } from '../constants/defaults'
 import { GPS } from './inc/GPS'

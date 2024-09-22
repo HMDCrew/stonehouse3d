@@ -13,6 +13,7 @@ export class GPS {
     constructor({ map, setHtmlMarker, Coordinate, Polygon, VectorLayer }) {
         
         this.map = map
+        this.myLocation = {lat: 0, lng: 0}
         
         this.setHtmlMarker = setHtmlMarker
         
@@ -241,10 +242,15 @@ export class GPS {
 
         const res = ev.detail
 
+        console.log(res)
+
         // fix browser on multiple click for geoloation on watching position
         if( res?.lng && res?.lat ) {
 
-            const coord = new this.Coordinate([res.lng, res.lat]) 
+            const coord = new this.Coordinate([res.lng, res.lat])
+
+            this.myLocation.lat = res.lat
+            this.myLocation.lng = res.lng
 
             if( ! this.marker ) {
 
