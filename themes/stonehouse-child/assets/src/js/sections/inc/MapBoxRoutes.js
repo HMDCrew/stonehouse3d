@@ -124,7 +124,7 @@ export class MapBoxRoutes extends Route {
 
             this.selectedLine = line
 
-            ! this.gps.need_extent && this.map.fitExtent(line.getExtent())
+            ! this.gps.needExtent && this.map.fitExtent(line.getExtent())
 
             this.prepareNavigation( to )
         })
@@ -143,9 +143,9 @@ export class MapBoxRoutes extends Route {
 
                 if ( marker ) {
 
-                    const gps_coord = this.gps.marker.getCoordinates()
+                    const gpsCoord = this.gps.marker.getCoordinates()
 
-                    this.drawRoute( profile, this.coord(gps_coord), destination )
+                    this.drawRoute( profile, this.coord(gpsCoord), destination )
                     clearInterval(observerId)
                 }
             }
@@ -153,9 +153,9 @@ export class MapBoxRoutes extends Route {
 
         } else {
 
-            const gps_coord = this.gps.marker.getCoordinates()
+            const gpsCoord = this.gps.marker.getCoordinates()
 
-            this.drawRoute( profile, this.coord(gps_coord), destination )
+            this.drawRoute( profile, this.coord(gpsCoord), destination )
         }
     }
 }

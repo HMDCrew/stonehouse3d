@@ -10,18 +10,18 @@ export class GPS {
 
     watchPositionID
 
-    constructor({ map, set_html_marker, Coordinate, Polygon, VectorLayer }) {
+    constructor({ map, setHtmlMarker, Coordinate, Polygon, VectorLayer }) {
         
         this.map = map
         
-        this.set_html_marker = set_html_marker
+        this.setHtmlMarker = setHtmlMarker
         
         this.Coordinate = Coordinate
         this.Polygon = Polygon
         this.VectorLayer = VectorLayer
 
         this.status = false
-        this.need_extent = true
+        this.needExtent = true
         this.marker = null
         this.accuracyLayer = null
 
@@ -187,7 +187,7 @@ export class GPS {
 
             if( ! this.marker ) {
 
-                this.marker = this.set_html_marker(coord, pointMarker(), 'middle')
+                this.marker = this.setHtmlMarker(coord, pointMarker(), 'middle')
                 this.marker.addTo(this.map).show()
 
             } else {
@@ -199,8 +199,8 @@ export class GPS {
             const circle = this.circular(coord, res.accuracy)
             this.accuracyLayer = new this.VectorLayer('vector', circle).addTo(this.map)
 
-            this.need_extent && this.map.fitExtent(circle.getExtent())
-            this.need_extent = false
+            this.needExtent && this.map.fitExtent(circle.getExtent())
+            this.needExtent = false
         }
     }
 

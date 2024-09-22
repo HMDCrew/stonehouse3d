@@ -1,9 +1,3 @@
-import walking from '../../images/walking.svg'
-import cycling from '../../images/cycling.svg'
-import car from '../../images/car.svg'
-import destination from '../../images/destination.svg'
-
-
 export const defaults = {
 
     topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png",

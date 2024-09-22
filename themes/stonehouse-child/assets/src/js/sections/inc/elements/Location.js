@@ -11,11 +11,11 @@ export class Location {
 
     constructor() {}
 
-    getSave() {
-        return this.content.querySelector('.btn-add-house')
-    }
+    setContent( content ) {
 
-    getClose() {
-        return this.content.querySelector('.close-btn')
+        this.content = content
+
+        this.save = this.content.querySelector('.btn-add-house')
+        this.close = this.content.querySelector('.close-btn')
     }
 }

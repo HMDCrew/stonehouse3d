@@ -27,70 +27,74 @@ export class MaptalksUX {
     baseLayer;
     menu;
 
-    mouse_has_moved = null
+    mouseHasMoved = null
     timerId = null
 
 
-    constructor(initial_location) {
+    constructor(initialLocation) {
 
         this.mapContainer = document.querySelector('.maps')
 
-        this.map = this.init_map(initial_location)
+        this.map = this.initMap(initialLocation)
         
         // Bad Clusters animations
         this.cluster = new ClusterLayer('cluster').addTo(this.map)
         this.cluster.config('animationDuration', 1)
 
-        this.menu = this.init_menu()
+        this.menu = this.initMenu()
         this.menu.addTo(this.map)
 
 
-        // JS DOM reorganization on progress....
-        this.map_box = new MapBoxRoutes({
-            map: this.map,
-            cluster: this.cluster,
-            gps: new GPS({
-                map: this.map,
-                set_html_marker: this.set_html_marker,
-                Coordinate,
-                Polygon,
-                VectorLayer
-            }),
-            LineVector: new VectorLayer( 'line' ).addTo( this.map ),
-            LineString,
-            createElementFromHTML,
-            coord,
-            lineColor: 'red'
-        })
-
+        // JS DOM three OR Main
         this.location = new ManageLocation({
+
             map: this.map,
             menu: this.menu,
             cluster: this.cluster,
-            map_box: this.map_box,
+
+            mapBox: new MapBoxRoutes({
+
+                map: this.map,
+                cluster: this.cluster,
+                gps: new GPS({
+
+                    map: this.map,
+                    setHtmlMarker: this.setHtmlMarker,
+                    Coordinate,
+                    Polygon,
+                    VectorLayer
+                }),
+
+                LineVector: new VectorLayer( 'line' ).addTo( this.map ),
+                LineString,
+                createElementFromHTML,
+                coord,
+                lineColor: 'red'
+            }),
+
             Coordinate,
             markerTemplate,
             coord,
             createElementFromHTML,
-            set_marker: this.set_marker,
-            set_html_marker: this.set_html_marker
+            setMarker: this.setMarker,
+            setHtmlMarker: this.setHtmlMarker
         })
 
 
-        this.map.on('mousedown', ev => this.add_marker_long_press(ev))
-        this.map.on('mousemove', () => this.mouse_has_moved = true)
+        this.map.on('mousedown', ev => this.addMarkerLongPress(ev))
+        this.map.on('mousemove', () => this.mouseHasMoved = true)
         this.map.on('mouseup', () => clearTimeout(this.timerId))
 
         // Mobile Add Marker
         if ( 'ontouchstart' in document.documentElement )
-            this.map.on('contextmenu', e => this.location.set_save_marker( e.coordinate ))
+            this.map.on('contextmenu', e => this.location.saveMarker( e.coordinate ))
 
         this.map.sortLayers(['line', 'cluster'])
         // this.map.on('click', ev => console.log(ev.coordinate))
     }
 
 
-    init_map(initial_location) {
+    initMap(initialLocation) {
 
         this.baseLayer = new TileLayer('base', {
             urlTemplate: defaults.geografica,
@@ -99,15 +103,14 @@ export class MaptalksUX {
         })
 
         return new Map('stonemap', {
-            center: [ initial_location.longitude, initial_location.latitude ],
+            center: [ initialLocation.longitude, initialLocation.latitude ],
             zoom: 14,
             baseLayer: this.baseLayer
         })
     }
 
 
-
-    init_menu() {
+    initMenu() {
         return new control.Toolbar({
             'vertical' : true,
             'position' : { 'top' : 20, 'left' : 20 },
@@ -117,17 +120,17 @@ export class MaptalksUX {
                 {
                     item: defaults.menu.my_location,
                     click : () => {
-                        if ( !this.map_box.gps.status ) {
+                        if ( !this.location.mapBox.gps.status ) {
 
-                            this.map_box.gps.startLocation()
+                            this.location.mapBox.gps.startLocation()
                 
                         } else {
                 
-                            this.map_box.gps.status = false
-                            this.map_box.gps.marker.remove()
-                            this.map_box.gps.marker = null
-                            this.map_box.gps.accuracyLayer.remove()
-                            this.map_box.gps.stopWatch()
+                            this.location.mapBox.gps.status = false
+                            this.location.mapBox.gps.marker.remove()
+                            this.location.mapBox.gps.marker = null
+                            this.location.mapBox.gps.accuracyLayer.remove()
+                            this.location.mapBox.gps.stopWatch()
                         }
                     }
                 },
@@ -142,18 +145,14 @@ export class MaptalksUX {
     }
 
 
-    
-   
-
-    set_marker(coordinate, type = 'default') {
-
+    setMarker(coordinate, type = 'default') {
         return new Marker( coordinate, {
             'symbol' : markerTemplate(type)
         })
     }
 
 
-    set_html_marker(coordinate, content, alignment = 'top') {
+    setHtmlMarker(coordinate, content, alignment = 'top') {
 
         return new ui.UIMarker(coordinate, {
             'draggable'         : false,
@@ -164,26 +163,16 @@ export class MaptalksUX {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-    add_marker_long_press( e ) {
+    addMarkerLongPress( e ) {
 
         this.timerId = setTimeout(() => {
 
-            if ( ! this.mouse_has_moved ) {
+            if ( ! this.mouseHasMoved ) {
                 // console.log(e.coordinate)
-                this.location.set_save_marker( e.coordinate )
+                this.location.saveMarker( e.coordinate )
             }
         }, 800)
 
-        this.mouse_has_moved = false
+        this.mouseHasMoved = false
     }
 }
