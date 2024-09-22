@@ -163,6 +163,30 @@
 
     }
 
+    #mini-map {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 5vw;
+        height: 5vw;
+        border-radius: 1vw;
+        overflow: hidden;
+        transition: all .3s;
+
+        canvas {
+            cursor: pointer;
+        }
+    
+        @media screen and (max-width: 1024px) {
+            & {
+                bottom: 40px;
+                right: 40px;
+                width: 10vw;
+                height: 10vw;
+            }
+        }
+    }
+
     .details {
         position: absolute;
         top: 0;

@@ -26,7 +26,6 @@ export class MaptalksUX {
 
     map;
     cluster;
-    baseLayer;
     menu;
 
     mouseHasMoved = null
@@ -38,6 +37,7 @@ export class MaptalksUX {
         this.mapContainer = document.querySelector('.maps')
 
         this.map = this.initMap(initialLocation)
+        this.miniMap = this.initMiniMap(initialLocation)
         
         // Bad Clusters animations
         this.cluster = new ClusterLayer('cluster').addTo(this.map)
@@ -96,6 +96,67 @@ export class MaptalksUX {
 
         this.map.sortLayers(['line', 'cluster'])
         // this.map.on('click', ev => console.log(ev.coordinate))
+
+
+        this.map.on('zoomend', ev => this.updateMiniMap(ev))
+        this.map.on('moveend', ev => this.updateMiniMap(ev))
+        this.map.on('resize' , ev => this.updateMiniMap(ev))
+        this.miniMap.on('click', ev => this.switchTileLayer())
+    }
+
+
+    /**
+     * The function `setTileLayer` creates a new TileLayer object with specified parameters.
+     * @param name - The `name` parameter is a string that represents the name of the tile layer being
+     * created.
+     * @param url - The `url` parameter in the `setTileLayer` function is the URL template for the tile
+     * layer. It specifies the location from which the map tiles will be loaded.
+     * @param [attribution] - The `attribution` parameter in the `setTileLayer` function is used to
+     * specify the attribution information for the tile layer. This information typically includes
+     * credits for the data source or map provider. It is displayed on the map to give credit to the
+     * creators of the map tiles.
+     * @returns A new TileLayer object with the specified name, URL template, subdomains, and
+     * attribution is being returned.
+     */
+    setTileLayer( name, url, attribution = '' ) {
+
+        return new TileLayer(name, {
+            urlTemplate: url,
+            subdomains: ["a","b","c","d", "e"],
+            attribution: attribution
+        })
+    }
+
+
+    /**
+     * The function `setTileMap` sets the tile layers for the main map and mini map based on the
+     * specified tile name.
+     * @param tileName - The `setTileMap` function takes in a `tileName` parameter, which is used to
+     * set the tile layer for the map. The function creates two tile layers - `miniBaseLayer` and
+     * `baseLayer` based on the provided `tileName`. The `baseLayer` includes attribution
+     */
+    setTileMap( tileName ) {
+
+        const miniBaseLayer = this.setTileLayer( 'mini-base', defaults[defaults.selected] )
+        const baseLayer = this.setTileLayer( 'base', defaults[tileName], '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' )
+
+        this.map.setBaseLayer(baseLayer)
+        this.miniMap.setBaseLayer(miniBaseLayer)
+
+        defaults.selected = tileName
+    }
+
+    
+    /**
+     * The switchTileLayer function toggles between 'geografica' and 'topografica' tile maps.
+     */
+    switchTileLayer() {
+ 
+        this.setTileMap(
+            'geografica' === defaults.selected
+            ? 'topografica'
+            : 'geografica'
+        )
     }
 
 
@@ -108,18 +169,54 @@ export class MaptalksUX {
      * @returns A new Map object with the specified center coordinates, zoom level, and base layer is
      * being returned from the initMap function.
      */
-    initMap(initialLocation) {
+    initMap( initialLocation ) {
 
-        this.baseLayer = new TileLayer('base', {
-            urlTemplate: defaults.geografica,
-            subdomains: ["a","b","c","d", "e"],
-            attribution: '&copy; <a href="http://osm.org">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/">CARTO</a>'
-        })
+        const baseLayer = this.setTileLayer( 'base', defaults[defaults.selected], '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a> | Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' )
 
         return new Map('stonemap', {
             center: [ initialLocation.longitude, initialLocation.latitude ],
             zoom: 14,
-            baseLayer: this.baseLayer
+            maxZoom: 19.4,
+            minZoom: 2.8,
+            baseLayer: baseLayer,
+            layers : [
+                this.setTileLayer( 'roads', defaults.roards )
+            ]
+        })
+    }
+
+
+    /**
+     * The function `initMiniMap` initializes a mini map with specific settings and disables certain
+     * interactions.
+     * @param initialLocation - The `initialLocation` parameter is an object that contains the
+     * longitude and latitude coordinates for the center of the mini map. It is used to set the initial
+     * center of the map when it is initialized.
+     * @returns A new Map object with the specified configuration settings for a mini map is being
+     * returned. The mini map is centered at the initial location coordinates provided, with a zoom
+     * level of 11, maximum zoom level of 19.4, and minimum zoom level of 2.8. The base layer for the
+     * mini map is set to 'mini-base' using the 'topografica' tile layer.
+     */
+    initMiniMap( initialLocation ) {
+
+        const miniBaseLayer = this.setTileLayer( 'mini-base', defaults.geografica )
+
+        return new Map('mini-map', {
+            center: [ initialLocation.longitude, initialLocation.latitude ],
+            zoom: 11,
+            maxZoom: 19.4,
+            minZoom: 2.8,
+            attribution: '',
+            baseLayer: miniBaseLayer,
+
+            // Disable mini map interactions
+            draggable : false,
+            dragPan : false,
+            dragRotate : false,
+            dragPitch : false,
+            scrollWheelZoom : false,
+            touchZoom : false,
+            doubleClickZoom : false
         })
     }
 
@@ -168,6 +265,27 @@ export class MaptalksUX {
 
 
     /**
+     * The `updateMiniMap` function adjusts the zoom level and center of a mini map based on the zoom
+     * level of another map.
+     * @param ev - The `ev` parameter in the `updateMiniMap` function likely represents an event object
+     * that is passed to the function when it is called. This event object may contain information
+     * about the event that triggered the function, such as the target element, zoom level, and center
+     * coordinates.
+     */
+    updateMiniMap( ev ) {
+        
+        const zoom = (
+            ev.target._zoomLevel - 3 > 0
+                ? ev.target._zoomLevel - 3
+                : 0
+        )
+
+        this.miniMap.panTo( ev.target.getCenter() )
+        this.miniMap.setZoom( zoom, {animation: true} )
+    }
+
+
+    /**
      * The function `setMarker` creates a new Marker object with a specified coordinate and marker
      * symbol based on a given type.
      * @param coordinate - The `coordinate` parameter is the location where you want to place the
@@ -179,7 +297,7 @@ export class MaptalksUX {
      * @returns A new Marker object with the specified coordinate and symbol based on the
      * markerTemplate for the given type.
      */
-    setMarker(coordinate, type = 'default') {
+    setMarker( coordinate, type = 'default' ) {
         return new Marker( coordinate, {
             'symbol' : markerTemplate(type)
         })
@@ -200,7 +318,7 @@ export class MaptalksUX {
      * possible values for the `alignment` parameter are:
      * @returns A new instance of `ui.UIMarker` with the specified properties is being returned.
      */
-    setHtmlMarker(coordinate, content, alignment = 'top') {
+    setHtmlMarker( coordinate, content, alignment = 'top' ) {
 
         return new ui.UIMarker(coordinate, {
             'draggable'         : false,
