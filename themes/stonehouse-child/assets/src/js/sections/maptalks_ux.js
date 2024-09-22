@@ -5,7 +5,7 @@ import { RoutePlayer, formatRouteData } from 'maptalks.routeplayer'
 
 import { defaults } from '../constants/defaults'
 import { GPS } from './inc/GPS'
-import { ManageLocation } from './inc/ManageLocation'
+import { ManageLocations } from './inc/ManageLocations'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxRoutes } from './inc/MapBoxRoutes'
 import { markerTemplate } from './inc/items/markerTemplate'
@@ -48,7 +48,7 @@ export class MaptalksUX {
 
 
         // JS DOM three OR Main
-        this.location = new ManageLocation({
+        this.manager = new ManageLocations({
 
 
             map: this.map,
@@ -92,7 +92,7 @@ export class MaptalksUX {
 
         // Mobile Add Marker
         if ( 'ontouchstart' in document.documentElement )
-            this.map.on('contextmenu', e => this.location.saveMarker( e.coordinate ))
+            this.map.on('contextmenu', e => this.manager.saveMarker( e.coordinate ))
 
         this.map.sortLayers(['line', 'cluster'])
         // this.map.on('click', ev => console.log(ev.coordinate))
@@ -125,17 +125,17 @@ export class MaptalksUX {
                 {
                     item: myLocation(),
                     click : () => {
-                        if ( !this.location.mapBox.gps.status ) {
+                        if ( !this.manager.mapBox.gps.status ) {
 
-                            this.location.mapBox.gps.startLocation()
+                            this.manager.mapBox.gps.startLocation()
                 
                         } else {
                 
-                            this.location.mapBox.gps.status = false
-                            this.location.mapBox.gps.marker.remove()
-                            this.location.mapBox.gps.marker = null
-                            this.location.mapBox.gps.accuracyLayer.remove()
-                            this.location.mapBox.gps.stopWatch()
+                            this.manager.mapBox.gps.status = false
+                            this.manager.mapBox.gps.marker.remove()
+                            this.manager.mapBox.gps.marker = null
+                            this.manager.mapBox.gps.accuracyLayer.remove()
+                            this.manager.mapBox.gps.stopWatch()
                         }
                     }
                 },
@@ -174,7 +174,7 @@ export class MaptalksUX {
 
             if ( ! this.mouseHasMoved ) {
                 // console.log(e.coordinate)
-                this.location.saveMarker( e.coordinate )
+                this.manager.saveMarker( e.coordinate )
             }
         }, 800)
 

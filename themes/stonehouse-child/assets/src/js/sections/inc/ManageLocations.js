@@ -6,7 +6,7 @@ import { pointMarker } from './items/pointMarker'
 import { houseItem } from './items/houseItem'
 
 
-export class ManageLocation extends Location {
+export class ManageLocations extends Location {
 
 
     locationSaved = false
