@@ -8,10 +8,10 @@ import { GPS } from './inc/GPS'
 import { ManageLocation } from './inc/ManageLocation'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxRoutes } from './inc/MapBoxRoutes'
-import { markerTemplate } from './inc/items/MarkerTemplate'
+import { markerTemplate } from './inc/items/markerTemplate'
 import { coord } from "./inc/items/coord"
-import { myLocation } from './inc/items/menu/MyLocation'
-import { locations } from './inc/items/menu/Locations'
+import { myLocation } from './inc/items/menu/myLocation'
+import { locations } from './inc/items/menu/locations'
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
 // topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",

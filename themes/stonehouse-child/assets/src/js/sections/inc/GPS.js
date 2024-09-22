@@ -1,7 +1,7 @@
 import { toDegrees } from "../../utils/math/toDegrees.js"
 import { toRadians } from "../../utils/math/toRadians.js"
 import { customEvent } from "../../utils/customEvent.js"
-import { pointMarker } from "./items/PointMarker.js";
+import { pointMarker } from "./items/pointMarker.js";
 
 
 const DEFAULT_RADIUS = 6371008.8;

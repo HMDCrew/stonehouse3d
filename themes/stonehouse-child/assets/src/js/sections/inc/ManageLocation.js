@@ -2,8 +2,8 @@ import { crud } from '../../constants/crud'
 import { Location } from './elements/Location'
 import { popupRouting } from './items/popups/routing'
 import { popupSaveHose } from './items/popups/saveHose'
-import { pointMarker } from './items/PointMarker'
-import { houseItem } from './items/HouseItem'
+import { pointMarker } from './items/pointMarker'
+import { houseItem } from './items/houseItem'
 
 
 export class ManageLocation extends Location {
