@@ -50,14 +50,17 @@ export class MaptalksUX {
         // JS DOM three OR Main
         this.location = new ManageLocation({
 
+
             map: this.map,
             menu: this.menu,
             cluster: this.cluster,
+
 
             mapBox: new MapBoxRoutes({
 
                 map: this.map,
                 cluster: this.cluster,
+
                 gps: new GPS({
 
                     map: this.map,
