@@ -36,6 +36,13 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The `initSavedLocations` function initializes saved locations by adding markers for each house
+     * location and setting up event listeners.
+     * @param houses - The `houses` parameter seems to be an object containing locations of houses. The
+     * `initSavedLocations` function initializes saved locations on a map by adding markers for each
+     * house location provided in the `houses` object.
+     */
     initSavedLocations(houses) {
 
         const addSavedMarker = (item) => {
@@ -54,6 +61,14 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The function `fixEmptyHouses` checks if the `locations` array is empty and adds or removes the
+     * 'disabled' class from a menu item accordingly.
+     * @param locations - It looks like the `fixEmptyHouses` function is designed to handle the
+     * visibility of a menu item based on the presence of locations. If the `locations` array is empty,
+     * the function adds a 'disabled' class to the menu item, otherwise it removes the 'disabled'
+     * class.
+     */
     fixEmptyHouses(locations) {
 
         let menuDom = this.menu.getDOM()
@@ -67,6 +82,10 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The `reset` function in JavaScript removes markers, popups, points, and content while resetting
+     * location status flags.
+     */
     reset() {
 
         this.marker && !this.locationSaved && this.marker.remove()
@@ -85,6 +104,8 @@ export class ManageLocations extends Location {
     }
 
 
+    /* The `handleCreateLocation` function is an asynchronous arrow function that takes in two
+    parameters: `coordinate` and `marker`. Here's a breakdown of what it does: */
     handleCreateLocation = async ( coordinate, marker ) => {
 
         let reponse = {status: 'error'}
@@ -119,6 +140,15 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The function `focusLocationMarker` compares the coordinates of an item and a marker, and
+     * animates the map to focus on the marker if they match.
+     * @param itemCoord - The `itemCoord` parameter represents the coordinates of an item, typically in
+     * the format `{ lat: number, lng: number }`. These coordinates are used to determine if the map
+     * should be focused on a specific location marker.
+     * @param markerCoord - MarkerCoord is an object that contains the coordinates of a marker on a
+     * map. It typically has two properties: x for the latitude and y for the longitude.
+     */
     focusLocationMarker( itemCoord, markerCoord ) {
 
         const lat_length = itemCoord.lat.toString().split(".")[1].length
@@ -139,6 +169,12 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The function `listenHoverItemMarker` listens for mouseenter events on a specified item and then
+     * focuses on location markers within a cluster based on the item's coordinates.
+     * @param item - The `item` parameter in the `listenHoverItemMarker` function is a reference to an
+     * HTML element that represents a location item.
+     */
     listenHoverItemMarker( item ) {
 
         const itemCoord = {
@@ -155,6 +191,10 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The function `savedLocationsListeners` adds hover event listeners to elements with the class
+     * `.house` within the `details` element.
+     */
     savedLocationsListeners() {
 
         const locations = this.details.querySelectorAll('.house')
@@ -163,6 +203,13 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The `clickSavedMarker` function handles the click event on a saved marker, displaying a popup
+     * with routing options for walking, cycling, and driving.
+     * @param ev - The `ev` parameter in the `clickSavedMarker` function likely refers to the event
+     * object that is passed when the function is triggered by a click event. This event object
+     * contains information about the event that occurred, such as the target element that was clicked.
+     */
     clickSavedMarker(ev) {
 
         this.mapBox.popup && this.mapBox.popup.remove()
@@ -190,6 +237,18 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The function `saveLocationMenuItem` adds a marker to a map cluster and appends details of a
+     * saved location if the response status is successful.
+     * @param marker - Marker is an object representing a specific location on a map. It typically
+     * includes information such as the latitude and longitude coordinates, title, and other properties
+     * related to the location. In the context of the `saveLocationMenuItem` function, the marker
+     * parameter is used to add a marker to a cluster on the
+     * @param response - The `response` parameter in the `saveLocationMenuItem` function likely
+     * contains information returned from a server request or API call. It seems to have a `status`
+     * property that indicates the status of the response (e.g., 'success') and a `message` property
+     * that contains details such as an
+     */
     saveLocationMenuItem(marker, response) {
 
         if ( this.locationSaved ) {
@@ -216,6 +275,14 @@ export class ManageLocations extends Location {
     }
 
 
+    /**
+     * The `saveMarker` function sets up a marker on a map with a popup and point marker at a specific
+     * coordinate, allowing the user to save the location.
+     * @param coordinate - The `coordinate` parameter in the `saveMarker` function is typically an
+     * object that represents the geographical coordinates of a location. It usually contains latitude
+     * and longitude values that specify a point on the Earth's surface. For example, a coordinate
+     * object could look like this:
+     */
     saveMarker(coordinate) {
 
         this.reset()

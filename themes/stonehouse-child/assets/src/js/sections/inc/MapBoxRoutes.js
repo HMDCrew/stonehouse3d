@@ -20,6 +20,18 @@ export class MapBoxRoutes extends Route {
     }
 
 
+    /**
+     * The `buildRoute` function uses the Mapbox API to generate a route between two locations and
+     * returns a Promise with the decoded route steps.
+     * @param profile - The `profile` parameter in the `buildRoute` function represents the type of
+     * routing profile to use for the directions. It could be values like `driving`, `walking`,
+     * `cycling`, etc., depending on the mode of transportation for which you want to generate the
+     * route.
+     * @returns The `buildRoute` function returns a Promise that resolves with an array of decoded
+     * route coordinates after making a request to the Mapbox Directions API. The decoded route
+     * coordinates are obtained by decoding the geometry of each step in the route and flipping the
+     * latitude and longitude values.
+     */
     buildRoute(profile, { from = { lat, lng }, to = { lat, lng } }) {
 
         return new Promise((resolve, reject) => {
@@ -55,6 +67,16 @@ export class MapBoxRoutes extends Route {
     }
 
 
+    /**
+     * The `lineRoute` function creates a route line between two points based on a specified profile.
+     * @param profile - Profile refers to the type of route being requested, such as walking, driving,
+     * or cycling.
+     * @param from - From is the starting point or origin of the route. It is the location from where
+     * the route will begin.
+     * @param to - The `to` parameter in the `lineRoute` function represents the destination or
+     * endpoint of the route that is being calculated. It is the location where the route will end.
+     * @returns A Promise is being returned from the lineRoute function.
+     */
     lineRoute( profile, from, to ) {
 
         return new Promise((resolve, reject) => {
@@ -131,6 +153,16 @@ export class MapBoxRoutes extends Route {
     }
 
 
+    /**
+     * The function `buildRoutingPath` determines the route from the current GPS location to a
+     * specified destination using a given profile.
+     * @param destination - The `destination` parameter in the `buildRoutingPath` function is the
+     * destination location to which the route will be calculated and displayed.
+     * @param profile - The `profile` parameter in the `buildRoutingPath` function is used to specify
+     * the type of routing profile or method to be used for calculating the route. It could be options
+     * like "driving", "walking", "cycling", etc., depending on the available routing services and
+     * their supported profiles
+     */
     buildRoutingPath( destination, profile ) {
 
         if ( ! this.gps.status ) {

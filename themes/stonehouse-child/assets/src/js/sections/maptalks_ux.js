@@ -99,6 +99,15 @@ export class MaptalksUX {
     }
 
 
+    /**
+     * The function `initMap` creates a new map centered on a specified location with a base layer
+     * using OpenStreetMap tiles.
+     * @param initialLocation - The `initialLocation` parameter is an object that contains the
+     * longitude and latitude coordinates of the initial location where the map will be centered. It is
+     * used to set the center of the map when initializing it in the `initMap` function.
+     * @returns A new Map object with the specified center coordinates, zoom level, and base layer is
+     * being returned from the initMap function.
+     */
     initMap(initialLocation) {
 
         this.baseLayer = new TileLayer('base', {
@@ -115,6 +124,14 @@ export class MaptalksUX {
     }
 
 
+    /**
+     * The `initMenu` function creates a vertical toolbar with two items - one for showing the user's
+     * location on a map and another for toggling the display of locations on the map.
+     * @returns A new control.Toolbar object with specific configuration settings and items is being
+     * returned. The toolbar is set to be vertical, positioned at the top left corner with a specific
+     * CSS class name. It includes two items with associated click functions: one for managing the
+     * user's location and another for toggling the visibility of locations on the map.
+     */
     initMenu() {
         return new control.Toolbar({
             'vertical' : true,
@@ -150,6 +167,18 @@ export class MaptalksUX {
     }
 
 
+    /**
+     * The function `setMarker` creates a new Marker object with a specified coordinate and marker
+     * symbol based on a given type.
+     * @param coordinate - The `coordinate` parameter is the location where you want to place the
+     * marker on a map. It typically consists of latitude and longitude values that specify a point on
+     * the Earth's surface.
+     * @param [type=default] - The `type` parameter in the `setMarker` function is used to specify the
+     * type of marker symbol to be used. By default, if no `type` is provided, it will use the
+     * 'default' marker symbol.
+     * @returns A new Marker object with the specified coordinate and symbol based on the
+     * markerTemplate for the given type.
+     */
     setMarker(coordinate, type = 'default') {
         return new Marker( coordinate, {
             'symbol' : markerTemplate(type)
@@ -157,6 +186,20 @@ export class MaptalksUX {
     }
 
 
+    /**
+     * The function setHtmlMarker creates a UI marker with specified content and alignment at a given
+     * coordinate.
+     * @param coordinate - The `coordinate` parameter is the location where you want to place the HTML
+     * marker on the map. It typically consists of latitude and longitude values that specify the
+     * position on the map.
+     * @param content - The `content` parameter in the `setHtmlMarker` function is the HTML content
+     * that you want to display within the marker. This can include text, images, links, or any other
+     * HTML elements that you want to show at the specified coordinate on the map.
+     * @param [alignment=top] - The `alignment` parameter in the `setHtmlMarker` function determines
+     * the vertical alignment of the marker content relative to the marker's position on the map. The
+     * possible values for the `alignment` parameter are:
+     * @returns A new instance of `ui.UIMarker` with the specified properties is being returned.
+     */
     setHtmlMarker(coordinate, content, alignment = 'top') {
 
         return new ui.UIMarker(coordinate, {
@@ -168,6 +211,13 @@ export class MaptalksUX {
     }
 
 
+    /**
+     * The addMarkerLongPress function sets a timer to save a marker coordinate if the mouse has not
+     * moved within 800 milliseconds.
+     * @param e - The parameter `e` in the `addMarkerLongPress` function likely represents an event
+     * object that is passed when a long press event occurs. This event object may contain information
+     * such as the coordinates of where the long press occurred.
+     */
     addMarkerLongPress( e ) {
 
         this.timerId = setTimeout(() => {
