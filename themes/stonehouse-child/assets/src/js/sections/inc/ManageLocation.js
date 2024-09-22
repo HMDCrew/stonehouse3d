@@ -3,7 +3,7 @@ import { Location } from './elements/Location'
 import { popupRouting } from './items/popups/routing'
 import { popupSaveHose } from './items/popups/saveHose'
 import { pointMarker } from './items/PointMarker'
-import { HouseItem } from './items/HouseItem'
+import { houseItem } from './items/HouseItem'
 
 
 export class ManageLocation extends Location {
@@ -197,7 +197,7 @@ export class ManageLocation extends Location {
             if ( response.status === 'success' ) {
 
                 const item = this.createElementFromHTML(
-                    HouseItem(
+                    houseItem(
                         response.message.id,
                         response.message.title,
                         response.message.location.lat,

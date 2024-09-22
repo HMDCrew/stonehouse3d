@@ -10,6 +10,8 @@ import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxRoutes } from './inc/MapBoxRoutes'
 import { markerTemplate } from './inc/items/MarkerTemplate'
 import { coord } from "./inc/items/coord"
+import { myLocation } from './inc/items/menu/MyLocation'
+import { locations } from './inc/items/menu/Locations'
 
 // urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
 // topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
@@ -118,7 +120,7 @@ export class MaptalksUX {
             'cssName': 'primary-map-menu',
             'items': [
                 {
-                    item: defaults.menu.my_location,
+                    item: myLocation(),
                     click : () => {
                         if ( !this.location.mapBox.gps.status ) {
 
@@ -135,7 +137,7 @@ export class MaptalksUX {
                     }
                 },
                 {
-                    item: defaults.menu.houses,
+                    item: locations(),
                     click : () => {
                         this.mapContainer.classList.toggle('show-houses')
                     },
