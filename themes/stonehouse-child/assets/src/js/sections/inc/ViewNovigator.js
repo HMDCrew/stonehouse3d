@@ -94,6 +94,15 @@ export class ViewNovigator extends Frame {
     }
 
 
+    frameIntermedio(i, inizio, fine) {
+
+        return {
+            x: inizio.x + i * ( (fine.x - inizio.x) / 60 ),
+            y: inizio.y + i * ( (fine.y - inizio.y) / 60 )
+        }
+    }
+
+
     animateChangeView() {
 
         ! this.paused && requestAnimationFrame( () => this.animateChangeView() )
@@ -101,59 +110,12 @@ export class ViewNovigator extends Frame {
         this.now = Date.now()
         this.delta = this.now - this.then;
 
-        // console.log({
-        //     pitch: {
-        //         now: this.currentPitch,
-        //         max: this.maxPitch,
-        //         frame: this.frameOf( this.maxPitch - this.currentPitch )
-        //     },
-        //     zoom: {
-        //         now: this.currentZoom,
-        //         max: this.maxZoom,
-        //         frame: this.frameOf( this.maxZoom - this.currentZoom )
-        //     }
-        // })
-
-        const gps_coord = this.gps.marker.getCenter()
-        const map_coord = this.map.getCenter()
-
-        // const diff = {
-        //     x: Math.max(gps_coord.x, map_coord.x) - Math.min(gps_coord.x, map_coord.x),
-        //     y: Math.max(gps_coord.y, map_coord.y) - Math.min(gps_coord.y, map_coord.y)
-        // }
-
-        // A = (x1, y1) e B = (x2, y2), 
-        // Mx = (x1 + x2) / 2
-        // My = (y1 + y2) / 2.
-
-        const M = {
-            x: this.frameOf( gps_coord.x + map_coord.x, false ),
-            y: this.frameOf( gps_coord.y + map_coord.y, false )
-        } 
-
-        console.log({
-            marker: gps_coord,
-            map: map_coord,
-            pan: {
-                x: map_coord.x + M.x,
-                y: map_coord.y + M.y
-            },
-            M
-        })
-
-
         // framerate condition
         if (this.delta > this.interval) {
 
-            // this.map.setCenter({
-            //     x: map_coord.x + M.x,
-            //     y: map_coord.y + M.y
-            // })
-
-            // this.map.setCenter({
-            //     x: map_coord.x + M.x,
-            //     y: map_coord.y + M.y
-            // })
+            this.map.setCenter(
+                this.frameIntermedio( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
+            )
 
             this.currentPitch += this.frameOf( this.maxPitch - this.currentPitch )
             this.currentZoom += this.frameOf( this.maxZoom - this.currentZoom )
@@ -187,6 +149,7 @@ export class ViewNovigator extends Frame {
         // this.map.panTo( this.gps.marker.getCenter() )
 
         this.now, this.delta, this.then = Date.now()
+        this.i = 0
 
         // console.log(this.currentPitch, this.map.getMaxZoom(), this.map._zoomLevel)
 
