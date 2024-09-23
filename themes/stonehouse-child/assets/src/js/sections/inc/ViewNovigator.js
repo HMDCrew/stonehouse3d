@@ -94,7 +94,7 @@ export class ViewNovigator extends Frame {
     }
 
 
-    frameIntermedio(i, inizio, fine) {
+    frameIntermedioCoordinate(i, inizio, fine) {
 
         return {
             x: inizio.x + i * ( (fine.x - inizio.x) / 60 ),
@@ -114,7 +114,7 @@ export class ViewNovigator extends Frame {
         if (this.delta > this.interval) {
 
             this.map.setCenter(
-                this.frameIntermedio( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
+                this.frameIntermedioCoordinate( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
             )
 
             this.currentPitch += this.frameOf( this.maxPitch - this.currentPitch )
