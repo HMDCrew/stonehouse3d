@@ -149,7 +149,7 @@ export class MapBoxRoutes extends Route {
 
             this.selectedLine = line
 
-            ! this.gps.needExtent && this.map.fitExtent(line.getExtent())
+            this.map.fitExtent(line.getExtent())
 
             this.prepareNavigation( to )
         })
@@ -170,7 +170,12 @@ export class MapBoxRoutes extends Route {
 
         if ( ! this.gps.status ) {
 
-            ! this.gps.marker && this.gps.startLocation()
+            if ( ! this.gps.marker ) {
+
+                this.gps.needExtent = false
+                this.gps.startLocation()
+            }
+
 
             // Observe Variable => this.gps.marker => for inescate route api request
             let observerId
