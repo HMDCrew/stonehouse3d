@@ -69,11 +69,16 @@ export class MaptalksUX {
                     VectorLayer
                 }),
 
+
                 LineVector: new VectorLayer( 'line' ).addTo( this.map ),
                 LineString,
+                Coordinate,
+                VectorLayer,
                 createElementFromHTML,
                 coord,
-                lineColor: 'red'
+                lineColor: 'red',
+                setHtmlMarker: this.setHtmlMarker,
+                setMarker: this.setMarker,
             }),
 
             Coordinate,

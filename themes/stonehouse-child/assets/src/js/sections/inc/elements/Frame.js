@@ -29,6 +29,15 @@ export class Frame {
     }
 
 
+    frameICoordinate(i, inizio, fine) {
+
+        return {
+            x: inizio.x + i * ( (fine.x - inizio.x) / FRAME ),
+            y: inizio.y + i * ( (fine.y - inizio.y) / FRAME )
+        }
+    }
+
+
     frameOf(number, limitLoop = true, limit = 0.0001, valueLimit = 0.001 ) {
         
         const frame_n = number / FRAME

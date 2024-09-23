@@ -7,7 +7,7 @@ import { ViewNovigator } from './ViewNovigator'
 export class MapBoxRoutes extends Route {
 
 
-    constructor ({ map, cluster, gps, LineVector, LineString, createElementFromHTML, coord, lineColor = 'red' }) {
+    constructor ({ map, cluster, gps, LineVector, LineString, Coordinate, VectorLayer, createElementFromHTML, coord, lineColor = 'red', setHtmlMarker, setMarker }) {
 
         super( LineVector )
 
@@ -21,9 +21,14 @@ export class MapBoxRoutes extends Route {
         })
 
         this.LineString = LineString
+        this.Coordinate = Coordinate
+        this.VectorLayer = VectorLayer
         this.createElementFromHTML = createElementFromHTML
         this.coord = coord
         this.lineColor = lineColor
+
+        this.setMarker = setMarker
+        this.setHtmlMarker = setHtmlMarker
     }
 
 
@@ -57,13 +62,27 @@ export class MapBoxRoutes extends Route {
 
                 // console.log(res.routes)
 
+                this.navigator.setRoutes(res.routes)
+
                 const steps = res.routes[0].legs[0].steps
 
                 let result = []
 
-                steps.forEach(step =>
+                const way = new this.VectorLayer('waypoints').addTo(this.map)
+
+                steps.forEach(step => {
                     result = [...result, ...decode(step.geometry, 5)]
-                )
+
+                    console.log(step.maneuver.instruction)
+                    const coord = new this.Coordinate(Array.from(step.maneuver.location))
+                    
+                    const point = this.setMarker(coord)
+                    point.addTo(way)
+
+                    const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
+                    popup.addTo(this.map).show()
+//                    this.map.setCenter(coord)
+                })
 
                 // flip latitude e longitude
                 result = result.map((item, idx) => [].concat(result[idx]).reverse())

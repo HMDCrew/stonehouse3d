@@ -3,6 +3,8 @@ import { Frame } from "./elements/Frame.js"
 
 export class ViewNovigator extends Frame {
 
+    routes
+
     constructor({ map, gps }) {
 
         super(map.getPitch(), map.getZoom())
@@ -94,15 +96,6 @@ export class ViewNovigator extends Frame {
     }
 
 
-    frameIntermedioCoordinate(i, inizio, fine) {
-
-        return {
-            x: inizio.x + i * ( (fine.x - inizio.x) / 60 ),
-            y: inizio.y + i * ( (fine.y - inizio.y) / 60 )
-        }
-    }
-
-
     animateChangeView() {
 
         ! this.paused && requestAnimationFrame( () => this.animateChangeView() )
@@ -114,7 +107,7 @@ export class ViewNovigator extends Frame {
         if (this.delta > this.interval) {
 
             this.map.setCenter(
-                this.frameIntermedioCoordinate( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
+                this.frameICoordinate( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
             )
 
             this.currentPitch += this.frameOf( this.maxPitch - this.currentPitch )
@@ -133,12 +126,7 @@ export class ViewNovigator extends Frame {
         ) {
 
             this.paused = true
-
-        } /*else {
-
-            // console.log('stop animation frame')
-            this.map.panTo( this.gps.marker.getCenter() )
-        }*/
+        }
     }
 
 
@@ -151,9 +139,13 @@ export class ViewNovigator extends Frame {
         this.now, this.delta, this.then = Date.now()
         this.i = 0
 
-        // console.log(this.currentPitch, this.map.getMaxZoom(), this.map._zoomLevel)
+        console.log(this.routes)
 
         this.animateChangeView()
+    }
+
+    setRoutes( routes ) {
+        this.routes = routes
     }
 }
 
