@@ -7,8 +7,6 @@ export class ViewNovigator extends Frame {
 
         super(map.getPitch(), map.getZoom())
 
-        // console.log(map.getPitch())
-
         this.map = map
         this.gps = gps
 
@@ -20,9 +18,10 @@ export class ViewNovigator extends Frame {
         this.originalBearing = this.map.getBearing()
 
         document.addEventListener("keyup", ev => {
-
+            
             const loc = this.gps.myLocation
-            const moviment = 0.00001
+            const moviment = 0.001
+            const center = this.map.getCenter()
  
             const test = () => {
                 customEvent(document, 'MyPosition', {
@@ -35,19 +34,19 @@ export class ViewNovigator extends Frame {
 
             switch(ev.code) {
                 case 'KeyW':
-                    loc.lat += moviment
+                    loc.lat += moviment / 100
                     test()
                     break;
                 case 'KeyA':
-                    loc.lng -= moviment
+                    loc.lng -= moviment / 100
                     test()
                     break;
                 case 'KeyS':
-                    loc.lat -= moviment
+                    loc.lat -= moviment / 100
                     test()
                     break;
                 case 'KeyD':
-                    loc.lng += moviment
+                    loc.lng += moviment / 100
                     test()
                     break;
                 case 'KeyZ':
@@ -58,6 +57,30 @@ export class ViewNovigator extends Frame {
                 case 'KeyX':
                     // rotazione
                     // this.map.setBearing(this.bearing++);
+                    break;
+                case 'KeyI':
+                    this.map.panTo({
+                        x: center.x,
+                        y: center.y + moviment
+                    })
+                    break;
+                case 'KeyL':
+                    this.map.panTo({
+                        x: center.x + moviment,
+                        y: center.y
+                    })
+                    break;
+                case 'KeyK':
+                    this.map.panTo({
+                        x: center.x,
+                        y: center.y - moviment
+                    })
+                    break;
+                case 'KeyJ':
+                    this.map.panTo({
+                        x: center.x - moviment,
+                        y: center.y
+                    })
                     break;
             }
         })
@@ -71,45 +94,72 @@ export class ViewNovigator extends Frame {
     }
 
 
-
-    // var now,delta,then = Date.now();
-    // var interval = 1000/30;
-
-    // function animate() {
-    //     requestAnimationFrame (animate);
-    //     now = Date.now();
-    //     delta = now - then;
-    //     //update time dependent animations here at 30 fps
-    //     if (delta > interval) {
-    //         sphereMesh.quaternion.multiplyQuaternions(autoRotationQuaternion, sphereMesh.quaternion);
-    //         then = now - (delta % interval);
-    //     }
-    //     render();
-    // }
-
     animateChangeView() {
 
         ! this.paused && requestAnimationFrame( () => this.animateChangeView() )
 
-
-        this.now = Date.now();
+        this.now = Date.now()
         this.delta = this.now - this.then;
 
-        // 
-        if (this.delta > this.interval) {
-            
-            if ( this.currentPitch < this.maxPitch ) {
-                this.currentPitch += 1
-        
-                this.map.setPitch( this.currentPitch )
-            }
-        
-            if ( this.currentZoom < this.maxZoom ) {
-                this.currentZoom += 0.1
-        
-                this.map.setZoom( this.currentZoom, {animation: false} )
-            }
+        // console.log({
+        //     pitch: {
+        //         now: this.currentPitch,
+        //         max: this.maxPitch,
+        //         frame: this.frameOf( this.maxPitch - this.currentPitch )
+        //     },
+        //     zoom: {
+        //         now: this.currentZoom,
+        //         max: this.maxZoom,
+        //         frame: this.frameOf( this.maxZoom - this.currentZoom )
+        //     }
+        // })
 
+        const gps_coord = this.gps.marker.getCenter()
+        const map_coord = this.map.getCenter()
+
+        // const diff = {
+        //     x: Math.max(gps_coord.x, map_coord.x) - Math.min(gps_coord.x, map_coord.x),
+        //     y: Math.max(gps_coord.y, map_coord.y) - Math.min(gps_coord.y, map_coord.y)
+        // }
+
+        // A = (x1, y1) e B = (x2, y2), 
+        // Mx = (x1 + x2) / 2
+        // My = (y1 + y2) / 2.
+
+        const M = {
+            x: this.frameOf( gps_coord.x + map_coord.x, false ),
+            y: this.frameOf( gps_coord.y + map_coord.y, false )
+        } 
+
+        console.log({
+            marker: gps_coord,
+            map: map_coord,
+            pan: {
+                x: map_coord.x + M.x,
+                y: map_coord.y + M.y
+            },
+            M
+        })
+
+
+        // framerate condition
+        if (this.delta > this.interval) {
+
+            // this.map.setCenter({
+            //     x: map_coord.x + M.x,
+            //     y: map_coord.y + M.y
+            // })
+
+            // this.map.setCenter({
+            //     x: map_coord.x + M.x,
+            //     y: map_coord.y + M.y
+            // })
+
+            this.currentPitch += this.frameOf( this.maxPitch - this.currentPitch )
+            this.currentZoom += this.frameOf( this.maxZoom - this.currentZoom )
+        
+            this.map.setPitch( this.currentPitch )
+            this.map.setZoom( this.currentZoom, {animation: false} )
 
             this.then = this.now - (this.delta % this.interval);
         }
@@ -121,7 +171,6 @@ export class ViewNovigator extends Frame {
         ) {
 
             this.paused = true
-            // setTimeout(() => requestAnimationFrame( () => this.animateChangeView() ), 1000 / 30)
 
         } /*else {
 
@@ -139,7 +188,7 @@ export class ViewNovigator extends Frame {
 
         this.now, this.delta, this.then = Date.now()
 
-        console.log(this.currentPitch, this.map.getMaxZoom(), this.map._zoomLevel)
+        // console.log(this.currentPitch, this.map.getMaxZoom(), this.map._zoomLevel)
 
         this.animateChangeView()
     }

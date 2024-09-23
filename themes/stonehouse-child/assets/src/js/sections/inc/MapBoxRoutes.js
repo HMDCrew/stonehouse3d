@@ -55,7 +55,7 @@ export class MapBoxRoutes extends Route {
 
                 res = JSON.parse(res)
 
-                console.log(res.routes)
+                // console.log(res.routes)
 
                 const steps = res.routes[0].legs[0].steps
 

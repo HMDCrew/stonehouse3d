@@ -37,7 +37,7 @@ export class MaptalksUX {
 
         this.map = this.initMap(initialLocation)
         this.miniMap = this.initMiniMap(initialLocation)
-        
+
         // Bad Clusters animations
         this.cluster = new ClusterLayer('cluster').addTo(this.map)
         this.cluster.config('animationDuration', 1)

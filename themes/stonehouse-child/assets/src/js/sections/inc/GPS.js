@@ -242,7 +242,7 @@ export class GPS {
 
         const res = ev.detail
 
-        console.log(res)
+        // console.log(res)
 
         // fix browser on multiple click for geoloation on watching position
         if( res?.lng && res?.lat ) {
