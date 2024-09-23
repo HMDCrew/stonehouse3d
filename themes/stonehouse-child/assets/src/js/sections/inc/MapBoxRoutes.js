@@ -14,6 +14,7 @@ export class MapBoxRoutes extends Route {
         this.map = map
         this.cluster = cluster
         this.gps = gps
+
         this.navigator = new ViewNovigator({
             map: this.map,
             gps: this.gps
