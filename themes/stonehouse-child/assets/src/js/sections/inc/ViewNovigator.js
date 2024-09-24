@@ -229,6 +229,7 @@ export class ViewNovigator extends Frame {
 
         const line = this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry)
         const result = line.map((item, idx) => [].concat(line[idx]).reverse())
+        result.push([gps_center.x, gps_center.y])
 
         const line2 = new this.LineString(this.rettaDiRegressioneForLineString(result), {
             symbol: {
