@@ -58,6 +58,8 @@ export class MaptalksUX {
             mapBox: new MapBoxRoutes({
 
                 map: this.map,
+                menu: this.menu,
+                miniMap: this.miniMap,
                 cluster: this.cluster,
 
                 gps: new GPS({
@@ -277,15 +279,18 @@ export class MaptalksUX {
      * coordinates.
      */
     updateMiniMap( ev ) {
-        
-        const zoom = (
-            ev.target._zoomLevel - 3 > 0
-                ? ev.target._zoomLevel - 3
-                : 0
-        )
 
-        this.miniMap.panTo( ev.target.getCenter() )
-        this.miniMap.setZoom( zoom, {animation: true} )
+        if ( ! this.miniMap?.stopListeners ) {
+
+            const zoom = (
+                ev.target._zoomLevel - 3 > 0
+                    ? ev.target._zoomLevel - 3
+                    : 0
+            )
+    
+            this.miniMap.panTo( ev.target.getCenter() )
+            this.miniMap.setZoom( zoom, {animation: true} )
+        }
     }
 
 

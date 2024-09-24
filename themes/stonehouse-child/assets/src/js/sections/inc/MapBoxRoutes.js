@@ -8,17 +8,24 @@ import { pointHelpPointTemplate } from "./items/pointHelpPointTemplate"
 export class MapBoxRoutes extends Route {
 
 
-    constructor ({ map, cluster, gps, LineVector, LineString, Coordinate, VectorLayer, createElementFromHTML, coord, lineColor = 'red', setHtmlMarker, setMarker }) {
+    constructor ({ map, miniMap, menu, cluster, gps, LineVector, LineString, Coordinate, VectorLayer, createElementFromHTML, coord, lineColor = 'red', setHtmlMarker, setMarker }) {
 
         super( LineVector )
 
         this.map = map
+        this.miniMap = miniMap
+        this.menu = menu
         this.cluster = cluster
         this.gps = gps
 
         this.navigator = new ViewNovigator({
             map: this.map,
-            gps: this.gps
+            miniMap: this.miniMap,
+            menu: this.menu,
+            gps: this.gps,
+            LineVector,
+            LineString,
+            polylineDecoder: decode
         })
 
         this.LineString = LineString
@@ -78,12 +85,13 @@ export class MapBoxRoutes extends Route {
                     // console.log(step.maneuver.instruction)
                     const coord = new this.Coordinate(Array.from(step.maneuver.location))
                     
+                    const point = this.setMarker(coord, 'default', pointHelpPointTemplate('test') )
+
                     const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
                     popup.addTo(this.map).hide()
-                    const point = this.setMarker(coord, 'default', pointHelpPointTemplate('test') )
-                    point.on('click', ev => {
-                        popup.show()
-                    })
+                    popup.on('click', ev => popup.hide())
+
+                    point.on('click', ev => popup.show())
                     point.addTo(way)
 
 //                    this.map.setCenter(coord)

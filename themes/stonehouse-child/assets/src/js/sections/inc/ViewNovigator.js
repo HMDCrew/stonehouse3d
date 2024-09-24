@@ -5,11 +5,13 @@ export class ViewNovigator extends Frame {
 
     routes
 
-    constructor({ map, gps }) {
+    constructor({ map, miniMap, menu, gps, LineVector, LineString, polylineDecoder }) {
 
         super(map.getPitch(), map.getZoom())
 
         this.map = map
+        this.miniMap = miniMap
+        this.menu = menu
         this.gps = gps
 
         this.maxPitch = 36.53
@@ -18,6 +20,10 @@ export class ViewNovigator extends Frame {
         this.originalZoom = this.currentZoom
         this.originalPitch = this.currentPitch
         this.originalBearing = this.map.getBearing()
+
+        this.LineVector = LineVector
+        this.LineString = LineString
+        this.polylineDecoder = polylineDecoder
 
         document.addEventListener("keyup", ev => {
             
@@ -91,8 +97,33 @@ export class ViewNovigator extends Frame {
 
     reset() {
         this.map.setPitch( this.originalPitch )
-        this.map.setZoom( this.originalZoom, {animation: false} )
+        this.map.setZoom( this.originalZoom, {animation: true} )
         this.map.panTo( this.originalCenter )
+    }
+
+
+    stopMapInteractions() {
+        this.map.setOptions({
+            draggable : false,
+            dragPan : false,
+            dragRotate : false,
+            dragPitch : false,
+            scrollWheelZoom : false,
+            touchZoom : false,
+            doubleClickZoom : false
+        })
+    }
+
+    enableMapInteractions() {
+        this.map.setOptions({
+            draggable: true,
+            dragPan: true,
+            dragRotate: true,
+            dragPitch: true,
+            scrollWheelZoom: true,
+            touchZoom: true,
+            doubleClickZoom: true
+        })
     }
 
 
@@ -126,9 +157,59 @@ export class ViewNovigator extends Frame {
         ) {
 
             this.paused = true
+            this.enableMapInteractions()
         }
     }
 
+    calcolaRettaDiRegressione(punti) {
+        const n = punti.length;
+
+        // Somme necessarie per calcolare m e b
+        let sommaX = 0;
+        let sommaY = 0;
+        let sommaXY = 0;
+        let sommaX2 = 0;
+
+        // Calcola le somme
+        for (let i = 0; i < n; i++) {
+            const x = punti[i][0];
+            const y = punti[i][1];
+
+            sommaX += x;
+            sommaY += y;
+            sommaXY += x * y;
+            sommaX2 += x * x;
+        }
+
+        // Calcola il coefficiente angolare m e l'intercetta b
+        const m = (n * sommaXY - sommaX * sommaY) / (n * sommaX2 - sommaX * sommaX);
+
+        return {
+            m: m,
+            b: (sommaY - m * sommaX) / n
+        }
+    }
+
+
+    rettaDiRegressioneForLineString(arrayCoordinate) {
+
+        const lineStringArray = []
+
+        const reg = this.calcolaRettaDiRegressione(arrayCoordinate)
+        const gps_center = this.gps.marker.getCenter()
+
+        const y = (x) => (reg.m * x) + reg.b
+
+        lineStringArray.push([ gps_center.x, y( gps_center.x ) ])
+        arrayCoordinate.forEach( coord => {
+
+            const x = coord[0]
+
+            lineStringArray.push([ x, y(x) ])
+        })
+
+        return lineStringArray
+    }
 
     startNavigation(ev) {
 
@@ -136,10 +217,26 @@ export class ViewNovigator extends Frame {
         // this.map.setZoom( this.maxZoom, {animation: false} )
         // this.map.panTo( this.gps.marker.getCenter() )
 
+        const gps_center = this.gps.marker.getCenter()
+
+        this.stopMapInteractions()
+        this.miniMap._containerDOM.classList.add('hide')
+        this.miniMap.stopListeners = true
+        this.menu.hide()
+
         this.now, this.delta, this.then = Date.now()
         this.i = 0
 
-        console.log(this.routes)
+        const line = this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry)
+        const result = line.map((item, idx) => [].concat(line[idx]).reverse())
+
+        const line2 = new this.LineString(this.rettaDiRegressioneForLineString(result), {
+            symbol: {
+                lineColor: '#1bbc9b'
+            }
+        })
+
+        line2.addTo(this.LineVector)
 
         this.animateChangeView()
     }
