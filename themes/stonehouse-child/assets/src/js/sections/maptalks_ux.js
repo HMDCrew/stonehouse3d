@@ -301,9 +301,9 @@ export class MaptalksUX {
      * @returns A new Marker object with the specified coordinate and symbol based on the
      * markerTemplate for the given type.
      */
-    setMarker( coordinate, type = 'default' ) {
+    setMarker( coordinate, type = 'default', symbol = false ) {
         return new Marker( coordinate, {
-            'symbol' : markerTemplate(type)
+            'symbol' : ! symbol ? markerTemplate(type) : symbol
         })
     }
 

@@ -3,6 +3,7 @@ import { decode } from "@mapbox/polyline"
 import { Route } from './elements/Route'
 import { popupStartNavigation } from "./items/popups/startNavigation"
 import { ViewNovigator } from './ViewNovigator'
+import { pointHelpPointTemplate } from "./items/pointHelpPointTemplate"
 
 export class MapBoxRoutes extends Route {
 
@@ -73,14 +74,17 @@ export class MapBoxRoutes extends Route {
                 steps.forEach(step => {
                     result = [...result, ...decode(step.geometry, 5)]
 
-                    console.log(step.maneuver.instruction)
+                    // console.log(step.maneuver.instruction)
                     const coord = new this.Coordinate(Array.from(step.maneuver.location))
                     
-                    const point = this.setMarker(coord)
+                    const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
+                    popup.addTo(this.map).hide()
+                    const point = this.setMarker(coord, 'default', pointHelpPointTemplate('test') )
+                    point.on('click', ev => {
+                        popup.show()
+                    })
                     point.addTo(way)
 
-                    const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
-                    popup.addTo(this.map).show()
 //                    this.map.setCenter(coord)
                 })
 
