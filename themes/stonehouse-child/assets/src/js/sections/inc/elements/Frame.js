@@ -29,23 +29,22 @@ export class Frame {
     }
 
 
-    frameICoordinate(i, inizio, fine) {
+    frameICoordinate(i, start, end) {
 
         return {
-            x: inizio.x + i * ( (fine.x - inizio.x) / FRAME ),
-            y: inizio.y + i * ( (fine.y - inizio.y) / FRAME )
+            x: start.x + i * ( (end.x - start.x) / FRAME ),
+            y: start.y + i * ( (end.y - start.y) / FRAME )
         }
     }
 
+    frameOf(current, target, currentFrame) {
 
-    frameOf(number, limitLoop = true, limit = 0.0001, valueLimit = 0.001 ) {
-        
-        const frame_n = number / FRAME
-        
-        return (
-            limitLoop
-            ? (frame_n > limit ? frame_n : valueLimit )
-            : frame_n
-        )
+        const t = currentFrame / FRAME;
+
+        return this.lerp(current, target, t);
+    }
+    
+    lerp(start, end, t) {
+        return start + t * (end - start);
     }
 }

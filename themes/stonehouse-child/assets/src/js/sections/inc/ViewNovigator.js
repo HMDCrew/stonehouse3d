@@ -1,4 +1,5 @@
 import { customEvent } from "../../utils/customEvent.js"
+import { navigatorArrow } from "./items/NavigatorArrow.js"
 import { Frame } from "./elements/Frame.js"
 
 export class ViewNovigator extends Frame {
@@ -141,8 +142,8 @@ export class ViewNovigator extends Frame {
                 this.frameICoordinate( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
             )
 
-            this.currentPitch += this.frameOf( this.maxPitch - this.currentPitch )
-            this.currentZoom += this.frameOf( this.maxZoom - this.currentZoom )
+            this.currentPitch = this.frameOf(this.currentPitch, this.maxPitch, this.i)
+            this.currentZoom = this.frameOf(this.currentZoom, this.maxZoom, this.i)
         
             this.map.setPitch( this.currentPitch )
             this.map.setZoom( this.currentZoom, {animation: false} )
@@ -200,15 +201,20 @@ export class ViewNovigator extends Frame {
 
         const y = (x) => (reg.m * x) + reg.b
 
+        const coordinate = (item) => {
+
+            const x = item[0]
+
+            return [x, y(x)]
+        }
+
         lineStringArray.push([ gps_center.x, y( gps_center.x ) ])
-        arrayCoordinate.forEach( coord => {
+        arrayCoordinate.forEach( coord => lineStringArray.push(coordinate(coord)) )
 
-            const x = coord[0]
-
-            lineStringArray.push([ x, y(x) ])
-        })
-
-        return lineStringArray
+        return {
+            line: lineStringArray,
+            reg: reg
+        }
     }
 
     startNavigation(ev) {
@@ -231,11 +237,28 @@ export class ViewNovigator extends Frame {
         const result = line.map((item, idx) => [].concat(line[idx]).reverse())
         result.push([gps_center.x, gps_center.y])
 
-        const line2 = new this.LineString(this.rettaDiRegressioneForLineString(result), {
+        const reg = this.rettaDiRegressioneForLineString(result)
+
+        const line2 = new this.LineString(reg.line, {
             symbol: {
                 lineColor: '#1bbc9b'
             }
         })
+
+        this.originalGpsCursor = this.gps.marker.getContent()
+        this.gps.marker.setContent(navigatorArrow())
+
+
+        // Converti m in un angolo in radianti
+        let theta_radianti = Math.atan(reg.reg.m);
+        let theta_gradi = theta_radianti * (180 / Math.PI);
+
+        const arrow = document.querySelector('.navigator-arrow')
+        // 90 - theta_gradi => per via dei assi x,y invertiti
+        console.log(arrow, reg, gps_center, reg.reg, 90 - theta_gradi )
+
+        // big problem
+        arrow.style.transform = 'rotate('+(90 - theta_gradi)+'deg)'; 
 
         line2.addTo(this.LineVector)
 
