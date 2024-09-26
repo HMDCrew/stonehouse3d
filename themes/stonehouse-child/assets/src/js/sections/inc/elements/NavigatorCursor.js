@@ -1,5 +1,4 @@
 import { navigatorArrow } from "../items/NavigatorArrow.js"
-import { regressionLine } from "../../../utils/math/regressionLine.js"
 import { toDegrees } from "../../../utils/math/toDegrees"
 
 export class NavigatorCursor {
@@ -17,49 +16,12 @@ export class NavigatorCursor {
         this.arrow = document.querySelector('.navigator-arrow')
 
         // init Cursor first rotation        
-        const result = []
-        result.push([this.center.x, this.center.y])
-        result.push([firstDecodedPolyline[0][1], firstDecodedPolyline[0][0]])
+        const m = ( this.center.x - firstDecodedPolyline[0][1] ) / (this.center.y - firstDecodedPolyline[0][0])
+        let theta_radianti = Math.atan(m)
 
-        const reg = this.regressionLineForDirection(result)
-
-        // Convert m to an angle in radians
-        let theta_radianti = Math.atan(reg.m)
-
-        this.arrow.style.transform = this.jsTrasformRotate( 90 - toDegrees(theta_radianti) )
+        this.arrow.style.transform = this.jsTrasformRotate( toDegrees(theta_radianti) )
 
         document.addEventListener('MyPosition', ev => this.updateCursor(ev))
-    }
-
-
-    /**
-     * The function `regressionLineForDirection` calculates a regression line for a set of coordinates
-     * and returns the points on the line along with the regression parameters.
-     * @param coordinates - Coordinates is an array of points in the format [x, y]. Each point
-     * represents a coordinate on a graph.
-     * @returns The function `regressionLineForDirection` is returning an object with two properties:
-     * `points` and the properties from the result of the `regressionLine` function. The `points`
-     * property contains an array of points calculated based on the input coordinates and the
-     * regression line equation.
-     */
-    regressionLineForDirection( coordinates ) {
-
-        const directionPoints = []
-        const reg = regressionLine(coordinates)
-
-        const y = (x) => (reg.m * x) + reg.b
-        const coordinate = (item) => {
-            const x = item[0]
-            return [x, y(x)]
-        }
-
-        directionPoints.push([ this.center.x, y( this.center.x ) ])
-        coordinates.forEach( coord => directionPoints.push(coordinate(coord)) )
-
-        return {
-            points: directionPoints,
-            ...reg
-        }
     }
 
 
