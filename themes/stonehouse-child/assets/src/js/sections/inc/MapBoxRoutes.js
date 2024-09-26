@@ -76,7 +76,7 @@ export class MapBoxRoutes extends Route {
                 let result = []
 
                 // need review and perform code
-                const way = new this.VectorLayer('waypoints').addTo(this.map)
+                // const way = new this.VectorLayer('waypoints').addTo(this.map)
 
                 steps.forEach(step => {
                     result = [...result, ...decode(step.geometry, 5)]

@@ -1,5 +1,7 @@
 import { navigatorArrow } from "../items/NavigatorArrow.js"
 import { toDegrees } from "../../../utils/math/toDegrees"
+import { toRadians } from "../../../utils/math/toRadians.js"
+import { normalizeAngle } from "../../../utils/math/normalizeAngle.js"
 
 export class NavigatorCursor {
 
@@ -16,10 +18,12 @@ export class NavigatorCursor {
         this.arrow = document.querySelector('.navigator-arrow')
 
         // init Cursor first rotation        
-        const m = ( this.center.x - firstDecodedPolyline[0][1] ) / (this.center.y - firstDecodedPolyline[0][0])
-        let theta_radianti = Math.atan(m)
-
-        this.arrow.style.transform = this.jsTrasformRotate( toDegrees(theta_radianti) )
+        this.arrow.style.transform = this.jsTrasformRotate(
+            this.bearingAngle({
+                firstPoint: this.center,
+                lastPoint: { x: firstDecodedPolyline[0][1], y: firstDecodedPolyline[0][0] },
+            })
+        )
 
         document.addEventListener('MyPosition', ev => this.updateCursor(ev))
     }
@@ -40,32 +44,6 @@ export class NavigatorCursor {
 
 
     /**
-     * The function `updateRotation` calculates the rotation angle based on the difference between two
-     * points and updates the rotation of an arrow element accordingly.
-     */
-    updateRotation({ firsPoint, lastPoint }) {
-
-        if (
-            firsPoint.x !== lastPoint.x &&
-            firsPoint.y !== lastPoint.y
-        ) {
-
-            const delta_x = firsPoint.x - lastPoint.x
-            const delta_y = firsPoint.y - lastPoint.y
-    
-            // Maptalks has reversed axes
-            const reverseAxes = {
-                x: delta_y,
-                y: delta_x
-            }
-    
-            const theta = Math.atan2(reverseAxes.y, reverseAxes.x)
-            this.arrow.style.transform = this.jsTrasformRotate( toDegrees(theta) )
-        }
-    }
-
-
-    /**
      * The `updateCursor` function in JavaScript updates the rotation based on the first and last
      * points provided.
      * @param ev - The `ev` parameter in the `updateCursor` function likely represents an event object
@@ -75,9 +53,37 @@ export class NavigatorCursor {
      */
     updateCursor( ev ) {
 
-        this.updateRotation({
-            firsPoint: { x: ev.detail.lng, y: ev.detail.lat },
-            lastPoint: this.lastPosition
-        })
+        this.arrow.style.transform = this.jsTrasformRotate(
+            this.bearingAngle({
+                firstPoint: { x: ev.detail.lng, y: ev.detail.lat },
+                lastPoint: this.lastPosition
+            })
+        )
+    }
+
+
+    /**
+     * The function calculates the bearing angle between two points on a map.
+     * @returns The `bearingAngle` function calculates the bearing angle between two points on the
+     * Earth's surface represented by their latitude and longitude coordinates. The function returns
+     * the normalized bearing angle in degrees, ensuring that the angle is within the range of 0 to 360
+     * degrees.
+     */
+    bearingAngle({ firstPoint, lastPoint }) {
+
+        const lat1 = toRadians(firstPoint.y)
+        const lat2 = toRadians(lastPoint.y)
+        const deltaLon = toRadians(lastPoint.x - firstPoint.x)
+
+        // Calculating the direction angle (bearing)
+        const x = Math.sin(deltaLon) * Math.cos(lat2)
+        const y = Math.cos(lat1) * Math.sin(lat2) - (Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon))
+
+        let angle = Math.atan2(x, y); // Use atan2 to manage dials
+        angle = toDegrees(angle)
+
+        // fix upside down arrow
+        angle = (angle + 180) % 360 
+        return normalizeAngle(angle)
     }
 }
