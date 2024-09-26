@@ -1,12 +1,12 @@
 import { customEvent } from "../../utils/customEvent.js"
-import { navigatorArrow } from "./items/NavigatorArrow.js"
 import { Frame } from "./elements/Frame.js"
+import { NavigatorCursor } from "./elements/NavigatorCursor.js"
 
 export class ViewNovigator extends Frame {
 
     routes
 
-    constructor({ map, miniMap, menu, gps, LineVector, LineString, polylineDecoder }) {
+    constructor({ map, miniMap, menu, gps, LineString, polylineDecoder }) {
 
         super(map.getPitch(), map.getZoom())
 
@@ -22,7 +22,6 @@ export class ViewNovigator extends Frame {
         this.originalPitch = this.currentPitch
         this.originalBearing = this.map.getBearing()
 
-        this.LineVector = LineVector
         this.LineString = LineString
         this.polylineDecoder = polylineDecoder
 
@@ -144,7 +143,7 @@ export class ViewNovigator extends Frame {
 
             this.currentPitch = this.frameOf(this.currentPitch, this.maxPitch, this.i)
             this.currentZoom = this.frameOf(this.currentZoom, this.maxZoom, this.i)
-        
+
             this.map.setPitch( this.currentPitch )
             this.map.setZoom( this.currentZoom, {animation: false} )
 
@@ -162,68 +161,12 @@ export class ViewNovigator extends Frame {
         }
     }
 
-    calcolaRettaDiRegressione(punti) {
-        const n = punti.length;
-
-        // Somme necessarie per calcolare m e b
-        let sommaX = 0;
-        let sommaY = 0;
-        let sommaXY = 0;
-        let sommaX2 = 0;
-
-        // Calcola le somme
-        for (let i = 0; i < n; i++) {
-            const x = punti[i][0];
-            const y = punti[i][1];
-
-            sommaX += x;
-            sommaY += y;
-            sommaXY += x * y;
-            sommaX2 += x * x;
-        }
-
-        // Calcola il coefficiente angolare m e l'intercetta b
-        const m = (n * sommaXY - sommaX * sommaY) / (n * sommaX2 - sommaX * sommaX);
-
-        return {
-            m: m,
-            b: (sommaY - m * sommaX) / n
-        }
-    }
-
-
-    rettaDiRegressioneForLineString(arrayCoordinate) {
-
-        const lineStringArray = []
-
-        const reg = this.calcolaRettaDiRegressione(arrayCoordinate)
-        const gps_center = this.gps.marker.getCenter()
-
-        const y = (x) => (reg.m * x) + reg.b
-
-        const coordinate = (item) => {
-
-            const x = item[0]
-
-            return [x, y(x)]
-        }
-
-        lineStringArray.push([ gps_center.x, y( gps_center.x ) ])
-        arrayCoordinate.forEach( coord => lineStringArray.push(coordinate(coord)) )
-
-        return {
-            line: lineStringArray,
-            reg: reg
-        }
-    }
 
     startNavigation(ev) {
 
         // this.map.setPitch( this.maxPitch )
         // this.map.setZoom( this.maxZoom, {animation: false} )
         // this.map.panTo( this.gps.marker.getCenter() )
-
-        const gps_center = this.gps.marker.getCenter()
 
         this.stopMapInteractions()
         this.miniMap._containerDOM.classList.add('hide')
@@ -233,34 +176,10 @@ export class ViewNovigator extends Frame {
         this.now, this.delta, this.then = Date.now()
         this.i = 0
 
-        const line = this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry)
-        const result = line.map((item, idx) => [].concat(line[idx]).reverse())
-        result.push([gps_center.x, gps_center.y])
-
-        const reg = this.rettaDiRegressioneForLineString(result)
-
-        const line2 = new this.LineString(reg.line, {
-            symbol: {
-                lineColor: '#1bbc9b'
-            }
+        const cursor = new NavigatorCursor({
+            gps: this.gps,
+            firstPolylineDecoded: this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry),
         })
-
-        this.originalGpsCursor = this.gps.marker.getContent()
-        this.gps.marker.setContent(navigatorArrow())
-
-
-        // Converti m in un angolo in radianti
-        let theta_radianti = Math.atan(reg.reg.m);
-        let theta_gradi = theta_radianti * (180 / Math.PI);
-
-        const arrow = document.querySelector('.navigator-arrow')
-        // 90 - theta_gradi => per via dei assi x,y invertiti
-        console.log(arrow, reg, gps_center, reg.reg, 90 - theta_gradi )
-
-        // big problem
-        arrow.style.transform = 'rotate('+(90 - theta_gradi)+'deg)'; 
-
-        line2.addTo(this.LineVector)
 
         this.animateChangeView()
     }

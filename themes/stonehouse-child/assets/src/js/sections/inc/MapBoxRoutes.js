@@ -23,7 +23,6 @@ export class MapBoxRoutes extends Route {
             miniMap: this.miniMap,
             menu: this.menu,
             gps: this.gps,
-            LineVector,
             LineString,
             polylineDecoder: decode
         })
@@ -83,16 +82,16 @@ export class MapBoxRoutes extends Route {
                     result = [...result, ...decode(step.geometry, 5)]
 
                     // console.log(step.maneuver.instruction)
-                    const coord = new this.Coordinate(Array.from(step.maneuver.location))
+                    // const coord = new this.Coordinate(Array.from(step.maneuver.location))
                     
-                    const point = this.setMarker(coord, 'default', pointHelpPointTemplate('test') )
+                    // const point = this.setMarker(coord, 'default', pointHelpPointTemplate('test') )
 
-                    const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
-                    popup.addTo(this.map).hide()
-                    popup.on('click', ev => popup.hide())
+                    // const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
+                    // popup.addTo(this.map).hide()
+                    // popup.on('click', ev => popup.hide())
 
-                    point.on('click', ev => popup.show())
-                    point.addTo(way)
+                    // point.on('click', ev => popup.show())
+                    // point.addTo(way)
 
 //                    this.map.setCenter(coord)
                 })
