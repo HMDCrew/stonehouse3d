@@ -178,7 +178,7 @@ export class ViewNovigator extends Frame {
 
         const cursor = new NavigatorCursor({
             gps: this.gps,
-            firstPolylineDecoded: this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry),
+            firstDecodedPolyline: this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry),
         })
 
         this.animateChangeView()
