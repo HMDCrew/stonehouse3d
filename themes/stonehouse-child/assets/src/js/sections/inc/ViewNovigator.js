@@ -57,6 +57,21 @@ export class ViewNovigator extends Frame {
                     loc.lng += moviment / 100
                     test()
                     break;
+
+
+
+                case 'KeyE':
+                    loc.lat += moviment / 100
+                    loc.lng += moviment / 100
+                    test()
+                    break;
+                case 'KeyQ':
+                    loc.lng -= moviment / 100
+                    loc.lat += moviment / 100
+                    test()
+                    break;
+
+
                 case 'KeyZ':
                     // angolazione
                     // this.map.setPitch(36.53);
@@ -113,6 +128,7 @@ export class ViewNovigator extends Frame {
             doubleClickZoom : false
         })
     }
+
 
     enableMapInteractions() {
         this.map.setOptions({

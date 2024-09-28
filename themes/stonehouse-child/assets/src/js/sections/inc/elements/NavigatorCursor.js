@@ -59,6 +59,9 @@ export class NavigatorCursor {
                 lastPoint: this.lastPosition
             })
         )
+
+        this.lastPosition.x = ev.detail.lng
+        this.lastPosition.y = ev.detail.lat
     }
 
 
