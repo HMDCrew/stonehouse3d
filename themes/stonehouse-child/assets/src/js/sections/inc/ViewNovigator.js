@@ -204,32 +204,3 @@ export class ViewNovigator extends Frame {
         this.routes = routes
     }
 }
-
-
-// function changeView() {
-//     if (pitch > 50) {
-//       d = 'down';
-//     } else if (pitch < 0) {
-//       d = 'up';
-//     }
-//     if (d === 'down') {
-//       pitch--;
-//     } else {
-//       pitch++;
-//     }
-//     map.setPitch(pitch);
-//     map.setBearing(bearing++);
-//     if (!paused) {
-//       requestAnimationFrame(changeView);
-//     }
-//   }
-
-//   function reset() {
-//     requestAnimationFrame(function() {
-//       paused = true;
-//       pitch = 0;
-//       bearing = 0;
-//       map.setPitch(0);
-//       map.setBearing(0);
-//     });
-//   }

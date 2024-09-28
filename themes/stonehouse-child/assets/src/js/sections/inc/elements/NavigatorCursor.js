@@ -44,6 +44,82 @@ export class NavigatorCursor {
 
 
     /**
+     * This function retrieves the rotation angle from the transform property of an HTML element.
+     * @returns The `getJsTrasformRotate()` function is returning the rotation angle of an element with
+     * the id "arrow" in degrees. It does this by extracting the rotation value from the CSS
+     * `transform` property of the element and converting it to a floating-point number using
+     * `parseFloat()`.
+     */
+    getJsTrasformRotate() {
+        return parseFloat(this.arrow.style.transform.split('(')[1].split(')')[0])
+    }
+
+
+    /**
+     * The function `shortestRotationAngle` calculates the shortest rotation angle between a current
+     * angle and a target angle.
+     * @param currentAngle - The `currentAngle` parameter represents the current angle in degrees at
+     * which an object is oriented. This angle is the starting point from which the rotation needs to
+     * be calculated.
+     * @param targetAngle - The `targetAngle` parameter represents the angle you want to rotate
+     * towards. This function calculates the shortest rotation angle needed to go from the
+     * `currentAngle` to the `targetAngle`. The function takes into account angles wrapping around 0
+     * degrees, ensuring that the rotation is always in the shortest direction.
+     * @returns The function `shortestRotationAngle` returns the shortest rotation angle needed to go
+     * from the `currentAngle` to the `targetAngle`.
+     */
+    shortestRotationAngle( currentAngle, targetAngle ) {
+
+        const delta = targetAngle - currentAngle
+
+        return (
+            delta > 180
+            ? delta - 360
+            : (
+                delta < -180
+                ? delta + 360
+                : delta
+            )
+        )
+    }
+
+
+    /**
+     * The function `animateRotation` animates the rotation of an element from a current angle to a
+     * target angle over a specified duration using requestAnimationFrame.
+     */
+    animateRotation({ currentAngle, targetAngle, duration }) {
+
+        requestAnimationFrame( () => step() )
+
+        const deltaAngle = this.shortestRotationAngle(
+            normalizeAngle(currentAngle),
+            normalizeAngle(targetAngle)
+        )
+
+        const frames = 60 * (duration / 1000)
+        const angleFrames = deltaAngle / frames
+
+        let frame = 0
+        const step = () => {
+
+            if ( frame < frames ) {
+
+                requestAnimationFrame( () => step() )
+
+                currentAngle += angleFrames
+                this.arrow.style.transform = this.jsTrasformRotate( currentAngle )
+
+                frame++
+
+            } else {
+                this.arrow.style.transform = this.arrow.style.transform = this.jsTrasformRotate( targetAngle )
+            }
+        }
+    }
+
+
+    /**
      * The `updateCursor` function in JavaScript updates the rotation based on the first and last
      * points provided.
      * @param ev - The `ev` parameter in the `updateCursor` function likely represents an event object
@@ -53,12 +129,17 @@ export class NavigatorCursor {
      */
     updateCursor( ev ) {
 
-        this.arrow.style.transform = this.jsTrasformRotate(
-            this.bearingAngle({
+        this.animateRotation({
+
+            currentAngle: this.getJsTrasformRotate(),
+
+            targetAngle: this.bearingAngle({
                 firstPoint: { x: ev.detail.lng, y: ev.detail.lat },
                 lastPoint: this.lastPosition
-            })
-        )
+            }),
+
+            duration: 200
+        })
 
         this.lastPosition.x = ev.detail.lng
         this.lastPosition.y = ev.detail.lat
