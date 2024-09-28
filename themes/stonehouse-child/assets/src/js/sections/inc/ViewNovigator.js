@@ -6,6 +6,7 @@ export class ViewNovigator extends Frame {
 
     routes
 
+
     constructor({ map, miniMap, menu, gps, LineString, polylineDecoder }) {
 
         super(map.getPitch(), map.getZoom())
@@ -17,13 +18,20 @@ export class ViewNovigator extends Frame {
 
         this.maxPitch = 36.53
         this.maxZoom = this.map.getMaxZoom()
-        this.originalCenter = this.map.getCenter()
-        this.originalZoom = this.currentZoom
-        this.originalPitch = this.currentPitch
-        this.originalBearing = this.map.getBearing()
+
+        this.originalCenter = null
+        this.originalZoom = null
+        this.originalPitch = null
+        this.originalBearing = null
+        this.originalGpsMarker = null
 
         this.LineString = LineString
         this.polylineDecoder = polylineDecoder
+
+        this.bottomControllers = document.querySelector('.navigation-controlls-bottom')
+        this.stopBtn = document.querySelector('.btn-stop-navigation')
+
+        this.stopBtn.addEventListener('click', ev => this.stopNavigation(), false)
 
         document.addEventListener("keyup", ev => {
             
@@ -110,13 +118,6 @@ export class ViewNovigator extends Frame {
     }
 
 
-    reset() {
-        this.map.setPitch( this.originalPitch )
-        this.map.setZoom( this.originalZoom, {animation: true} )
-        this.map.panTo( this.originalCenter )
-    }
-
-
     stopMapInteractions() {
         this.map.setOptions({
             draggable : false,
@@ -143,15 +144,67 @@ export class ViewNovigator extends Frame {
     }
 
 
-    animateChangeView() {
+    animateViewOut() {
 
-        ! this.paused && requestAnimationFrame( () => this.animateChangeView() )
+        ! this.pausedOut && requestAnimationFrame( () => this.animateViewOut() )
 
         this.now = Date.now()
         this.delta = this.now - this.then;
 
         // framerate condition
-        if (this.delta > this.interval) {
+        if ( this.delta > this.interval ) {
+
+            this.map.setCenter(
+                this.frameICoordinate( this.i++, this.map.getCenter(), this.originalCenter )
+            )
+
+            this.currentPitch = this.frameOf(this.currentPitch, this.originalPitch, this.i)
+            this.currentZoom = this.frameOf(this.currentZoom, this.originalZoom, this.i)
+
+            this.map.setPitch( this.currentPitch )
+            this.map.setZoom( this.currentZoom, { animation: false } )
+
+            this.then = this.now - (this.delta % this.interval);
+        }
+
+        if (
+            this.currentPitch <= this.originalPitch &&
+            this.currentZoom <= this.originalZoom
+        ) {
+
+            this.pausedOut = true
+            this.enableMapInteractions()
+
+            this.bottomControllers.classList.add('closed')
+        }
+    }
+
+
+    stopNavigation() {
+
+        this.stopMapInteractions()
+        this.miniMap._containerDOM.classList.remove('hide')
+        this.miniMap.stopListeners = false
+        this.menu.show()
+
+        this.now, this.delta, this.then = Date.now()
+        this.i = 0
+
+        this.animateViewOut()
+
+        this.gps.marker.setContent( this.originalGpsMarkerContent )
+    }
+
+
+    animateViewIn() {
+
+        ! this.pausedIn && requestAnimationFrame( () => this.animateViewIn() )
+
+        this.now = Date.now()
+        this.delta = this.now - this.then;
+
+        // framerate condition
+        if ( this.delta > this.interval ) {
 
             this.map.setCenter(
                 this.frameICoordinate( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
@@ -161,7 +214,7 @@ export class ViewNovigator extends Frame {
             this.currentZoom = this.frameOf(this.currentZoom, this.maxZoom, this.i)
 
             this.map.setPitch( this.currentPitch )
-            this.map.setZoom( this.currentZoom, {animation: false} )
+            this.map.setZoom( this.currentZoom, { animation: false } )
 
             this.then = this.now - (this.delta % this.interval);
         }
@@ -172,17 +225,15 @@ export class ViewNovigator extends Frame {
             this.currentZoom >= this.maxZoom
         ) {
 
-            this.paused = true
+            this.pausedIn = true
             this.enableMapInteractions()
+
+            this.bottomControllers.classList.remove('closed')
         }
     }
 
 
     startNavigation(ev) {
-
-        // this.map.setPitch( this.maxPitch )
-        // this.map.setZoom( this.maxZoom, {animation: false} )
-        // this.map.panTo( this.gps.marker.getCenter() )
 
         this.stopMapInteractions()
         this.miniMap._containerDOM.classList.add('hide')
@@ -192,13 +243,21 @@ export class ViewNovigator extends Frame {
         this.now, this.delta, this.then = Date.now()
         this.i = 0
 
+        this.originalCenter  = this.map.getCenter()
+        this.originalZoom    = this.map.getZoom()
+        this.originalPitch   = this.map.getPitch()
+        this.originalBearing = this.map.getBearing()
+
+        this.originalGpsMarkerContent = this.gps.marker.getContent()
+
         const cursor = new NavigatorCursor({
             gps: this.gps,
             firstDecodedPolyline: this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry),
         })
 
-        this.animateChangeView()
+        this.animateViewIn()
     }
+
 
     setRoutes( routes ) {
         this.routes = routes

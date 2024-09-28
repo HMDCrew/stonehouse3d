@@ -370,6 +370,41 @@
         opacity: .8;
         transform: scale(0.9) translateX(-2px);
     }
+
+    .navigation {
+
+        &.navigation-controlls-bottom {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: #5cb85c;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 10px 18px;
+            transition: all .3s;
+
+            .btn-stop-navigation {
+
+                cursor: pointer;
+                display: flex;
+
+                svg {
+
+                    transition: all .3s;
+                    border-radius: 50px;
+
+                    &:hover {
+                        background: white;
+                    }
+                }
+            }
+
+            &.closed {
+                bottom: -70px !important;
+            }
+        }
+    }
 }
 
 // .marker_icon {
