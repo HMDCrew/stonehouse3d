@@ -13,20 +13,20 @@ export class Frame {
     delta
     then
 
-    constructor(currentPitch, currentZoom) {
-        this.currentPitch = Number.parseFloat(currentPitch)
-        this.currentZoom = Number.parseFloat(currentZoom)
+    constructor( currentPitch, currentZoom ) {
+        this.currentPitch = Number.parseFloat( currentPitch )
+        this.currentZoom = Number.parseFloat( currentZoom )
     }
 
 
     // const rounded = roundTo(4.687, 2)
     // console.log(rounded) // Outputs: 4.69
-    roundTo(num, precision) {
+    // roundTo(num, precision) {
 
-        const factor = Math.pow(10, precision)
+    //     const factor = Math.pow(10, precision)
 
-        return Math.round(num * factor) / factor
-    }
+    //     return Math.round(num * factor) / factor
+    // }
 
 
     frameICoordinate(i, start, end) {

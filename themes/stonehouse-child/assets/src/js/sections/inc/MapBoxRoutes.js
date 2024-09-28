@@ -135,6 +135,17 @@ export class MapBoxRoutes extends Route {
     }
 
 
+    startNavigation(ev) {
+        this.popup.remove()
+        this.navigator.startNavigation(ev)
+    }
+
+
+    closeNavigation() {
+        this.cluster.forEach( async marker => marker.show() )
+        this.routeVector.removeGeometry( this.selectedLine )
+    }
+
 
     prepareNavigation( destination ) {
 
@@ -157,16 +168,9 @@ export class MapBoxRoutes extends Route {
         items.classList.add('justify-around')
 
         const start_nav = this.createElementFromHTML( popupStartNavigation() )
-        start_nav.addEventListener('click', ev => this.navigator.startNavigation(ev), false)
+        start_nav.addEventListener('click', ev => this.startNavigation(ev), false)
 
-
-        close.addEventListener('click', ev => {
-
-            this.cluster.forEach( async marker => marker.show() )
-
-            this.routeVector.removeGeometry( this.selectedLine )
-
-        }, false)
+        close.addEventListener('click', ev => this.closeNavigation(), false)
 
         items.append( start_nav )
     }
