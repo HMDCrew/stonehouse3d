@@ -144,96 +144,35 @@ export class ViewNovigator extends Frame {
     }
 
 
-    animateViewOut() {
+    animateView({ mapDestination, pitchTarget, zoomTarget, onEnd }) {
 
-        ! this.pausedOut && requestAnimationFrame( () => this.animateViewOut() )
+        ! this.paused && requestAnimationFrame( () => this.animateView({ mapDestination, pitchTarget, zoomTarget, onEnd }) )
 
         this.now = Date.now()
-        this.delta = this.now - this.then;
+        this.delta = this.now - this.then
 
         // framerate condition
         if ( this.delta > this.interval ) {
 
+
             this.map.setCenter(
-                this.frameICoordinate( this.i++, this.map.getCenter(), this.originalCenter )
+                this.frameICoordinate( this.i++, this.map.getCenter(), mapDestination )
             )
 
-            this.currentPitch = this.frameOf(this.currentPitch, this.originalPitch, this.i)
-            this.currentZoom = this.frameOf(this.currentZoom, this.originalZoom, this.i)
+            this.currentPitch = this.frameOf(this.currentPitch, pitchTarget, this.i)
+            this.currentZoom = this.frameOf(this.currentZoom, zoomTarget, this.i)
 
             this.map.setPitch( this.currentPitch )
             this.map.setZoom( this.currentZoom, { animation: false } )
 
-            this.then = this.now - (this.delta % this.interval);
+            this.then = this.now - (this.delta % this.interval)
         }
 
-        if (
-            this.currentPitch <= this.originalPitch &&
-            this.currentZoom <= this.originalZoom
-        ) {
-
-            this.pausedOut = true
-            this.enableMapInteractions()
-
-            this.bottomControllers.classList.add('closed')
-        }
+        onEnd(mapDestination, pitchTarget, zoomTarget)
     }
 
 
-    stopNavigation() {
-
-        this.stopMapInteractions()
-        this.miniMap._containerDOM.classList.remove('hide')
-        this.miniMap.stopListeners = false
-        this.menu.show()
-
-        this.now, this.delta, this.then = Date.now()
-        this.i = 0
-
-        this.animateViewOut()
-
-        this.gps.marker.setContent( this.originalGpsMarkerContent )
-    }
-
-
-    animateViewIn() {
-
-        ! this.pausedIn && requestAnimationFrame( () => this.animateViewIn() )
-
-        this.now = Date.now()
-        this.delta = this.now - this.then;
-
-        // framerate condition
-        if ( this.delta > this.interval ) {
-
-            this.map.setCenter(
-                this.frameICoordinate( this.i++, this.map.getCenter(), this.gps.marker.getCenter() )
-            )
-
-            this.currentPitch = this.frameOf(this.currentPitch, this.maxPitch, this.i)
-            this.currentZoom = this.frameOf(this.currentZoom, this.maxZoom, this.i)
-
-            this.map.setPitch( this.currentPitch )
-            this.map.setZoom( this.currentZoom, { animation: false } )
-
-            this.then = this.now - (this.delta % this.interval);
-        }
-
-
-        if (
-            this.currentPitch >= this.maxPitch &&
-            this.currentZoom >= this.maxZoom
-        ) {
-
-            this.pausedIn = true
-            this.enableMapInteractions()
-
-            this.bottomControllers.classList.remove('closed')
-        }
-    }
-
-
-    startNavigation(ev) {
+    startNavigation( ev ) {
 
         this.stopMapInteractions()
         this.miniMap._containerDOM.classList.add('hide')
@@ -241,6 +180,7 @@ export class ViewNovigator extends Frame {
         this.menu.hide()
 
         this.now, this.delta, this.then = Date.now()
+        this.paused = false
         this.i = 0
 
         this.originalCenter  = this.map.getCenter()
@@ -255,7 +195,58 @@ export class ViewNovigator extends Frame {
             firstDecodedPolyline: this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry),
         })
 
-        this.animateViewIn()
+        this.animateView({
+            mapDestination: this.gps.marker.getCenter(),
+            pitchTarget: this.maxPitch,
+            zoomTarget: this.maxZoom,
+            onEnd: (mapDestination, pitchTarget, zoomTarget) => {
+
+                if (
+                    this.currentPitch >= pitchTarget &&
+                    this.currentZoom >= zoomTarget
+                ) {
+
+                    this.paused = true
+                    this.enableMapInteractions()
+
+                    this.bottomControllers.classList.remove('closed')
+                }
+            }
+        })
+    }
+
+
+    stopNavigation() {
+
+        this.stopMapInteractions()
+        this.miniMap._containerDOM.classList.remove('hide')
+        this.miniMap.stopListeners = false
+        this.menu.show()
+
+        this.now, this.delta, this.then = Date.now()
+        this.paused = false
+        this.i = 0
+
+        this.animateView({
+            mapDestination: this.originalCenter,
+            pitchTarget: this.originalPitch,
+            zoomTarget: this.originalZoom,
+            onEnd: (mapDestination, pitchTarget, zoomTarget) => {
+
+                if (
+                    this.currentPitch <= pitchTarget &&
+                    this.currentZoom <= zoomTarget
+                ) {
+
+                    this.paused = true
+                    this.enableMapInteractions()
+
+                    this.bottomControllers.classList.add('closed')
+                }
+            }
+        })
+
+        this.gps.marker.setContent( this.originalGpsMarkerContent )
     }
 
 

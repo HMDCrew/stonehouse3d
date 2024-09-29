@@ -17,7 +17,7 @@ export class NavigatorCursor {
         this.gps.marker.setContent(navigatorArrow())
         this.arrow = document.querySelector('.navigator-arrow')
 
-        // init Cursor first rotation        
+        // init Cursor first rotation
         this.arrow.style.transform = this.jsTrasformRotate(
             this.bearingAngle({
                 firstPoint: this.center,
