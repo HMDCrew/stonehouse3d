@@ -7,8 +7,10 @@ import { GPS } from './inc/GPS'
 import { ManageLocations } from './inc/ManageLocations'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxRoutes } from './inc/MapBoxRoutes'
+import { ViewNovigator } from './inc/ViewNovigator'
 import { markerTemplate } from './inc/items/markerTemplate'
 import { coord } from "./inc/items/coord"
+import { decode } from "@mapbox/polyline"
 import { myLocation } from './inc/items/menu/myLocation'
 import { locations } from './inc/items/menu/locations'
 
@@ -45,50 +47,42 @@ export class MaptalksUX {
         this.menu = this.initMenu()
         this.menu.addTo(this.map)
 
-
         // JS DOM three OR Main
         this.manager = new ManageLocations({
-
-
-            map: this.map,
-            menu: this.menu,
-            cluster: this.cluster,
-
+            UX: this,
 
             mapBox: new MapBoxRoutes({
+                UX: this,
 
-                map: this.map,
-                menu: this.menu,
-                miniMap: this.miniMap,
-                cluster: this.cluster,
+                navigator: new ViewNovigator({
+                    UX: this,
 
-                gps: new GPS({
+                    gps: new GPS({
+                        UX: this,
 
-                    map: this.map,
-                    setHtmlMarker: this.setHtmlMarker,
-                    Coordinate,
-                    Polygon,
-                    VectorLayer
+                        Coordinate,
+                        Polygon,
+                        VectorLayer
+                    }),
+
+                    LineString,
+                    polylineDecoder: decode
                 }),
-
 
                 LineVector: new VectorLayer( 'line' ).addTo( this.map ),
                 LineString,
-                Coordinate,
-                VectorLayer,
+
                 createElementFromHTML,
                 coord,
+
                 lineColor: 'red',
-                setHtmlMarker: this.setHtmlMarker,
-                setMarker: this.setMarker,
+                polylineDecoder: decode,
             }),
 
             Coordinate,
             markerTemplate,
             coord,
-            createElementFromHTML,
-            setMarker: this.setMarker,
-            setHtmlMarker: this.setHtmlMarker
+            createElementFromHTML
         })
 
 
@@ -245,17 +239,17 @@ export class MaptalksUX {
                 {
                     item: myLocation(),
                     click : () => {
-                        if ( !this.manager.mapBox.gps.status ) {
+                        if ( !this.navigator.gps.status ) {
 
-                            this.manager.mapBox.gps.startLocation()
+                            this.navigator.gps.startLocation()
                 
                         } else {
                 
-                            this.manager.mapBox.gps.status = false
-                            this.manager.mapBox.gps.marker.remove()
-                            this.manager.mapBox.gps.marker = null
-                            this.manager.mapBox.gps.accuracyLayer.remove()
-                            this.manager.mapBox.gps.stopWatch()
+                            this.navigator.gps.status = false
+                            this.navigator.gps.marker.remove()
+                            this.navigator.gps.marker = null
+                            this.navigator.gps.accuracyLayer.remove()
+                            this.navigator.gps.stopWatch()
                         }
                     }
                 },

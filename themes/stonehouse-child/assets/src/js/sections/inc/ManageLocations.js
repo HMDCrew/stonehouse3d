@@ -12,15 +12,13 @@ export class ManageLocations extends Location {
     locationSaved = false
 
 
-    constructor({ map, menu, cluster, mapBox, Coordinate, markerTemplate, coord, createElementFromHTML, setMarker, setHtmlMarker }) {
+    constructor({ UX, mapBox, Coordinate, markerTemplate, coord, createElementFromHTML }) {
 
         super()
 
         this.details = document.querySelector('.details')
 
-        this.map = map
-        this.menu = menu
-        this.cluster = cluster
+        this.UX = UX
         this.mapBox = mapBox
 
         this.Coordinate = Coordinate
@@ -28,8 +26,6 @@ export class ManageLocations extends Location {
         this.markerTemplate = markerTemplate
         this.coord = coord
         this.createElementFromHTML = createElementFromHTML
-        this.setMarker = setMarker
-        this.setHtmlMarker = setHtmlMarker
 
         this.initSavedLocations(stonehouse_data)
         this.fixEmptyHouses(stonehouse_data.locations)
@@ -50,9 +46,9 @@ export class ManageLocations extends Location {
             const {lat, lng} = item.location
             const coord = new this.Coordinate([lat, lng])
 
-            const marker = this.setMarker(coord, 'success')
+            const marker = this.UX.setMarker(coord, 'success')
             marker.on('click', ev => this.clickSavedMarker(ev))
-            marker.addTo(this.cluster)
+            marker.addTo(this.UX.cluster)
         }
 
         Object.values(houses.locations).forEach( async item => addSavedMarker(item) )
@@ -71,7 +67,7 @@ export class ManageLocations extends Location {
      */
     fixEmptyHouses(locations) {
 
-        let menuDom = this.menu.getDOM()
+        let menuDom = this.UX.menu.getDOM()
         const li = menuDom.querySelector('#houses-svg-icon').closest('li')
 
         if ( ! locations.length )
@@ -159,7 +155,7 @@ export class ManageLocations extends Location {
             itemCoord.lng === parseFloat(markerCoord.y.toFixed(lng_length))
         ) {
             
-            this.map.animateTo({
+            this.UX.map.animateTo({
                 center: markerCoord,
                 zoom: 13,
             }, {
@@ -184,7 +180,7 @@ export class ManageLocations extends Location {
 
         item.addEventListener('mouseenter', ev => 
 
-            this.cluster.forEach( async marker => 
+            this.UX.cluster.forEach( async marker => 
                 this.focusLocationMarker( itemCoord, marker.getCoordinates() )
             )
         )
@@ -229,11 +225,11 @@ export class ManageLocations extends Location {
         btnCar.addEventListener('click', ev => this.mapBox.buildRoutingPath( destination, 'mapbox/driving-traffic' ), false)
 
         const close = content.querySelector('.close-btn')
-        this.mapBox.popup = this.setHtmlMarker( coord, content )
+        this.mapBox.popup = this.UX.setHtmlMarker( coord, content )
 
         close.addEventListener('click', ev => this.mapBox.popup.remove(), false)
 
-        this.mapBox.popup.addTo(this.map).show()
+        this.mapBox.popup.addTo(this.UX.map).show()
     }
 
 
@@ -265,7 +261,7 @@ export class ManageLocations extends Location {
                 )
 
                 this.listenHoverItemMarker( item )
-                marker.addTo(this.cluster)
+                marker.addTo(this.UX.cluster)
                 marker.on('click', ev => this.clickSavedMarker(ev))
                 this.details.append(item)
             }
@@ -291,9 +287,9 @@ export class ManageLocations extends Location {
 
         this.setContent( content )
 
-        this.marker = this.setMarker(coordinate)
-        this.popup = this.setHtmlMarker(coordinate, content)
-        this.point = this.setHtmlMarker(coordinate, pointMarker(), 'middle')
+        this.marker = this.UX.setMarker(coordinate)
+        this.popup = this.UX.setHtmlMarker(coordinate, content)
+        this.point = this.UX.setHtmlMarker(coordinate, pointMarker(), 'middle')
 
         this.save.addEventListener('click', async ev => this.saveLocationMenuItem(
             this.marker,
@@ -302,8 +298,8 @@ export class ManageLocations extends Location {
 
         this.close.addEventListener('click', ev => this.reset(), false)
 
-        this.marker.addTo(this.cluster)
-        this.popup.addTo(this.map).show()
-        this.point.addTo(this.map).show()
+        this.marker.addTo(this.UX.cluster)
+        this.popup.addTo(this.UX.map).show()
+        this.point.addTo(this.UX.map).show()
     }
 }

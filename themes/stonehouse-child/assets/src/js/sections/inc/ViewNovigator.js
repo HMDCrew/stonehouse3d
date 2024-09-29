@@ -1,23 +1,32 @@
 import { customEvent } from "../../utils/customEvent.js"
-import { Frame } from "./elements/Frame.js"
 import { NavigatorCursor } from "./elements/NavigatorCursor.js"
 
-export class ViewNovigator extends Frame {
+const FRAME = 60
+
+export class ViewNovigator {
 
     routes
+    paused = false
+    
+    currentPitch = 0
+    currentZoom = 0
+    interval = 1000 / FRAME
 
+    now
+    delta
+    then
 
-    constructor({ map, miniMap, menu, gps, LineString, polylineDecoder }) {
+    constructor({ UX, gps, LineString, polylineDecoder }) {
 
-        super(map.getPitch(), map.getZoom())
+        this.UX = UX
 
-        this.map = map
-        this.miniMap = miniMap
-        this.menu = menu
+        this.currentPitch = Number.parseFloat( this.UX.map.getPitch() )
+        this.currentZoom = Number.parseFloat( this.UX.map.getZoom() )
+
         this.gps = gps
 
         this.maxPitch = 36.53
-        this.maxZoom = this.map.getMaxZoom()
+        this.maxZoom = this.UX.map.getMaxZoom()
 
         this.originalCenter = null
         this.originalZoom = null
@@ -37,7 +46,7 @@ export class ViewNovigator extends Frame {
             
             const loc = this.gps.myLocation
             const moviment = 0.001
-            const center = this.map.getCenter()
+            const center = this.UX.map.getCenter()
  
             const test = () => {
                 customEvent(document, 'MyPosition', {
@@ -82,33 +91,33 @@ export class ViewNovigator extends Frame {
 
                 case 'KeyZ':
                     // angolazione
-                    // this.map.setPitch(36.53);
-                    // this.map.setPitch(this.pitch);
+                    // this.UX.map.setPitch(36.53);
+                    // this.UX.map.setPitch(this.pitch);
                     break;
                 case 'KeyX':
                     // rotazione
-                    // this.map.setBearing(this.bearing++);
+                    // this.UX.map.setBearing(this.bearing++);
                     break;
                 case 'KeyI':
-                    this.map.panTo({
+                    this.UX.map.panTo({
                         x: center.x,
                         y: center.y + moviment
                     })
                     break;
                 case 'KeyL':
-                    this.map.panTo({
+                    this.UX.map.panTo({
                         x: center.x + moviment,
                         y: center.y
                     })
                     break;
                 case 'KeyK':
-                    this.map.panTo({
+                    this.UX.map.panTo({
                         x: center.x,
                         y: center.y - moviment
                     })
                     break;
                 case 'KeyJ':
-                    this.map.panTo({
+                    this.UX.map.panTo({
                         x: center.x - moviment,
                         y: center.y
                     })
@@ -118,8 +127,30 @@ export class ViewNovigator extends Frame {
     }
 
 
+    frameICoordinate(i, start, end) {
+
+        return {
+            x: start.x + i * ( (end.x - start.x) / FRAME ),
+            y: start.y + i * ( (end.y - start.y) / FRAME )
+        }
+    }
+
+
+    frameOf(current, target, currentFrame) {
+
+        const t = currentFrame / FRAME;
+
+        return this.lerp(current, target, t);
+    }
+    
+
+    lerp(start, end, t) {
+        return start + t * (end - start);
+    }
+
+
     stopMapInteractions() {
-        this.map.setOptions({
+        this.UX.map.setOptions({
             draggable : false,
             dragPan : false,
             dragRotate : false,
@@ -132,7 +163,7 @@ export class ViewNovigator extends Frame {
 
 
     enableMapInteractions() {
-        this.map.setOptions({
+        this.UX.map.setOptions({
             draggable: true,
             dragPan: true,
             dragRotate: true,
@@ -155,15 +186,15 @@ export class ViewNovigator extends Frame {
         if ( this.delta > this.interval ) {
 
 
-            this.map.setCenter(
-                this.frameICoordinate( this.i++, this.map.getCenter(), mapDestination )
+            this.UX.map.setCenter(
+                this.frameICoordinate( this.i++, this.UX.map.getCenter(), mapDestination )
             )
 
             this.currentPitch = this.frameOf(this.currentPitch, pitchTarget, this.i)
             this.currentZoom = this.frameOf(this.currentZoom, zoomTarget, this.i)
 
-            this.map.setPitch( this.currentPitch )
-            this.map.setZoom( this.currentZoom, { animation: false } )
+            this.UX.map.setPitch( this.currentPitch )
+            this.UX.map.setZoom( this.currentZoom, { animation: false } )
 
             this.then = this.now - (this.delta % this.interval)
         }
@@ -175,18 +206,18 @@ export class ViewNovigator extends Frame {
     startNavigation( ev ) {
 
         this.stopMapInteractions()
-        this.miniMap._containerDOM.classList.add('hide')
-        this.miniMap.stopListeners = true
-        this.menu.hide()
+        this.UX.miniMap._containerDOM.classList.add('hide')
+        this.UX.miniMap.stopListeners = true
+        this.UX.menu.hide()
 
         this.now, this.delta, this.then = Date.now()
         this.paused = false
         this.i = 0
 
-        this.originalCenter  = this.map.getCenter()
-        this.originalZoom    = this.map.getZoom()
-        this.originalPitch   = this.map.getPitch()
-        this.originalBearing = this.map.getBearing()
+        this.originalCenter  = this.UX.map.getCenter()
+        this.originalZoom    = this.UX.map.getZoom()
+        this.originalPitch   = this.UX.map.getPitch()
+        this.originalBearing = this.UX.map.getBearing()
 
         this.originalGpsMarkerContent = this.gps.marker.getContent()
 
@@ -219,9 +250,9 @@ export class ViewNovigator extends Frame {
     stopNavigation() {
 
         this.stopMapInteractions()
-        this.miniMap._containerDOM.classList.remove('hide')
-        this.miniMap.stopListeners = false
-        this.menu.show()
+        this.UX.miniMap._containerDOM.classList.remove('hide')
+        this.UX.miniMap.stopListeners = false
+        this.UX.menu.show()
 
         this.now, this.delta, this.then = Date.now()
         this.paused = false

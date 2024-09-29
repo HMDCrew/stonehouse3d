@@ -1,41 +1,24 @@
 import { sendHttpReq } from "../../utils/api/http"
-import { decode } from "@mapbox/polyline"
-import { Route } from './elements/Route'
 import { popupStartNavigation } from "./items/popups/startNavigation"
-import { ViewNovigator } from './ViewNovigator'
-import { pointHelpPointTemplate } from "./items/pointHelpPointTemplate"
 
-export class MapBoxRoutes extends Route {
+export class MapBoxRoutes {
 
+    popup = null
+    routeVector = null
+    selectedLine = null
 
-    constructor ({ map, miniMap, menu, cluster, gps, LineVector, LineString, Coordinate, VectorLayer, createElementFromHTML, coord, lineColor = 'red', setHtmlMarker, setMarker }) {
+    constructor ({ UX, navigator, LineVector, LineString, createElementFromHTML, coord, polylineDecoder, lineColor = 'red' }) {
 
-        super( LineVector )
+        this.UX = UX
 
-        this.map = map
-        this.miniMap = miniMap
-        this.menu = menu
-        this.cluster = cluster
-        this.gps = gps
-
-        this.navigator = new ViewNovigator({
-            map: this.map,
-            miniMap: this.miniMap,
-            menu: this.menu,
-            gps: this.gps,
-            LineString,
-            polylineDecoder: decode
-        })
+        this.navigator = navigator
 
         this.LineString = LineString
-        this.Coordinate = Coordinate
-        this.VectorLayer = VectorLayer
+        this.routeVector = LineVector
+        this.polylineDecoder = polylineDecoder
         this.createElementFromHTML = createElementFromHTML
         this.coord = coord
         this.lineColor = lineColor
-
-        this.setMarker = setMarker
-        this.setHtmlMarker = setHtmlMarker
     }
 
 
@@ -76,10 +59,10 @@ export class MapBoxRoutes extends Route {
                 let result = []
 
                 // need review and perform code
-                // const way = new this.VectorLayer('waypoints').addTo(this.map)
+                // const way = new this.VectorLayer('waypoints').addTo(this.UX.map)
 
                 steps.forEach(step => {
-                    result = [...result, ...decode(step.geometry, 5)]
+                    result = [...result, ...this.polylineDecoder(step.geometry, 5)]
 
                     // console.log(step.maneuver.instruction)
                     // const coord = new this.Coordinate(Array.from(step.maneuver.location))
@@ -87,13 +70,13 @@ export class MapBoxRoutes extends Route {
                     // const point = this.setMarker(coord, 'default', pointHelpPointTemplate('test') )
 
                     // const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
-                    // popup.addTo(this.map).hide()
+                    // popup.addTo(this.UX.map).hide()
                     // popup.on('click', ev => popup.hide())
 
                     // point.on('click', ev => popup.show())
                     // point.addTo(way)
 
-//                    this.map.setCenter(coord)
+                    // this.UX.map.setCenter(coord)
                 })
 
                 // flip latitude e longitude
@@ -142,7 +125,7 @@ export class MapBoxRoutes extends Route {
 
 
     closeNavigation() {
-        this.cluster.forEach( async marker => marker.show() )
+        this.UX.cluster.forEach( async marker => marker.show() )
         this.routeVector.removeGeometry( this.selectedLine )
     }
 
@@ -150,7 +133,7 @@ export class MapBoxRoutes extends Route {
     prepareNavigation( destination ) {
 
         // hide other markers
-        this.cluster.forEach( async marker => {
+        this.UX.cluster.forEach( async marker => {
 
             const markerCoord = this.coord( marker.getCoordinates() )
 
@@ -184,7 +167,7 @@ export class MapBoxRoutes extends Route {
 
             this.selectedLine = line
 
-            this.map.fitExtent(line.getExtent())
+            this.UX.map.fitExtent(line.getExtent())
 
             this.prepareNavigation( to )
         })
@@ -203,32 +186,32 @@ export class MapBoxRoutes extends Route {
      */
     buildRoutingPath( destination, profile ) {
 
-        if ( ! this.gps.status ) {
+        if ( ! this.navigator.gps.status ) {
 
-            if ( ! this.gps.marker ) {
+            if ( ! this.navigator.gps.marker ) {
 
-                this.gps.needExtent = false
-                this.gps.startLocation()
+                this.navigator.gps.needExtent = false
+                this.navigator.gps.startLocation()
             }
 
 
-            // Observe Variable => this.gps.marker => for inescate route api request
+            // Observe Variable => this.navigator.gps.marker => for inescate route api request
             let observerId
             const tick = ( marker ) => {
 
                 if ( marker ) {
 
-                    const gpsCoord = this.gps.marker.getCoordinates()
+                    const gpsCoord = this.navigator.gps.marker.getCoordinates()
 
                     this.drawRoute( profile, this.coord(gpsCoord), destination )
                     clearInterval(observerId)
                 }
             }
-            observerId = setInterval( () => tick(this.gps.marker), 10 )
+            observerId = setInterval( () => tick(this.navigator.gps.marker), 10 )
 
         } else {
 
-            const gpsCoord = this.gps.marker.getCoordinates()
+            const gpsCoord = this.navigator.gps.marker.getCoordinates()
 
             this.drawRoute( profile, this.coord(gpsCoord), destination )
         }
