@@ -213,7 +213,7 @@ export class MapBoxRoutes {
     }
 
 
-    drawRoute( profile, from, to ) {
+    drawRoutes( profile, from, to ) {
 
         this.linesRoutes( profile, from, to ).then( ({ lines, opaced }) => {
 
@@ -273,7 +273,7 @@ export class MapBoxRoutes {
 
                     const gpsCoord = this.navigator.gps.marker.getCoordinates()
 
-                    this.drawRoute( profile, this.coord(gpsCoord), destination )
+                    this.drawRoutes( profile, this.coord(gpsCoord), destination )
                     clearInterval(observerId)
                 }
             }
@@ -283,7 +283,7 @@ export class MapBoxRoutes {
 
             const gpsCoord = this.navigator.gps.marker.getCoordinates()
 
-            this.drawRoute( profile, this.coord(gpsCoord), destination )
+            this.drawRoutes( profile, this.coord(gpsCoord), destination )
         }
     }
 }
