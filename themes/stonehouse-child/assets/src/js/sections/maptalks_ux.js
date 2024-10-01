@@ -66,6 +66,9 @@ export class MaptalksUX {
                         VectorLayer
                     }),
 
+                    Coordinate,
+                    VectorLayer,
+
                     polylineDecoder: decode
                 }),
 

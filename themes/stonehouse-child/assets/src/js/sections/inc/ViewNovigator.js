@@ -1,6 +1,7 @@
 import { customEvent } from "../../utils/customEvent.js"
 import { NavigatorCursor } from "./elements/NavigatorCursor.js"
 import { pointMarker } from "./items/pointMarker.js"
+import { toRadians } from "../../utils/math/toRadians.js"
 
 const FRAME = 60
 
@@ -19,7 +20,7 @@ export class ViewNovigator {
     delta
     then
 
-    constructor({ UX, gps, polylineDecoder }) {
+    constructor({ UX, gps, Coordinate, VectorLayer, polylineDecoder }) {
 
         this.UX = UX
 
@@ -38,6 +39,8 @@ export class ViewNovigator {
         this.originalGpsMarker = null
 
         this.polylineDecoder = polylineDecoder
+        this.Coordinate = Coordinate
+        this.VectorLayer = VectorLayer
 
         this.bottomControllers = document.querySelector('.navigation-controlls-bottom')
         this.stopBtn = document.querySelector('.btn-stop-navigation')
@@ -126,6 +129,8 @@ export class ViewNovigator {
                     break;
             }
         })
+
+        document.addEventListener('MyPosition', ev => this.positionUpdated(ev))
     }
 
 
@@ -230,7 +235,7 @@ export class ViewNovigator {
      * The `animateView` function animates the view of a map by updating its center, pitch, and zoom
      * properties over time until reaching the specified targets.
      */
-    animateView({ mapDestination, pitchTarget, zoomTarget, onEnd }) {
+    animateView({ mapDestination, pitchTarget, zoomTarget, onMiddle = () => {}, onEnd }) {
         
         ! this.paused && requestAnimationFrame( () => this.animateView({ mapDestination, pitchTarget, zoomTarget, onEnd }) )
 
@@ -251,10 +256,70 @@ export class ViewNovigator {
             this.UX.map.setPitch( this.currentPitch )
             this.UX.map.setZoom( this.currentZoom, { animation: false } )
 
+            onMiddle()
+
             this.then = this.now - (this.delta % this.interval)
         }
 
         onEnd(mapDestination, pitchTarget, zoomTarget)
+    }
+
+    pointsDistance( p1, p2 ) {
+        // return Math.sqrt(
+        //     Math.pow( p1.x - p2.x, 2 ) + 
+        //     Math.pow( p1.y - p2.y, 2 )
+        // )
+
+        p1 = { x: toRadians(p1.x), y: toRadians(p1.y) }
+        p2 = { x: toRadians(p2.x), y: toRadians(p2.y) }
+
+        return 2 * 6371000 * Math.asin(
+            Math.sqrt(
+                Math.pow(
+                    Math.sin( ( p2.y - p1.y ) / 2 ),
+                    2
+                ) +
+                Math.cos( p1.y ) * Math.cos( p2.y ) *
+                Math.pow(
+                    Math.sin( (p2.x - p1.x) / 2 ),
+                    2
+                )
+            )
+        )
+    }
+
+
+    showStepIndication( maneuver ) {
+        console.log( maneuver )
+    }
+
+
+    positionUpdated( ev ) {
+
+        if ( this.navigationStarted ) {
+
+            const path = this.routes[this.route_id]
+            const step = path.legs[0].steps[this.selectedStep]
+            
+            if ( step ) {
+
+                const coord = new this.Coordinate(step.maneuver.location)
+                const myLocation = this.gps.marker.getCenter()
+    
+                this.accuracyLayer.removeGeometry( this.gps_circle )
+                this.gps_circle = this.gps.circular(myLocation, 20)
+                this.gps_circle.addTo(this.accuracyLayer)
+
+                const distanceHelp = this.pointsDistance( myLocation, coord )
+
+                if ( distanceHelp <= 3 ) {
+
+                    this.showStepIndication( step.maneuver )
+
+                    this.selectedStep++
+                }
+            }
+        }
     }
 
 
@@ -268,15 +333,35 @@ export class ViewNovigator {
      */
     startNavigation() {
 
-        console.log(this.routes)
-        console.log(this.routes[this.route_id])
+        const path = this.routes[this.route_id]
 
-        Array.from( this.routes[this.route_id].legs[0].steps ).forEach( item => {
+        console.log(path)
+        
+        this.accuracyLayer = new this.VectorLayer('vector-helps').addTo(this.UX.map)
+        this.selectedStep = 1
 
-            const marker = this.UX.setHtmlMarker(item.maneuver.location, pointMarker(), 'middle')
-            
+        Array.from( path.legs[0].steps ).forEach( step => {
+
+            const marker = this.UX.setHtmlMarker(step.maneuver.location, pointMarker(), 'middle')
             marker.addTo(this.UX.map).show()
+
+            const coord = new this.Coordinate(step.maneuver.location)
+
+            console.log( this.pointsDistance( this.gps.marker.getCenter(), coord ) )
+
+            const circle = this.gps.circular(coord, 20)
+            circle.addTo(this.accuracyLayer)
         })
+
+        // [9.182454, 45.468506] => help maneuver existential big problem
+
+        this.showStepIndication( path.legs[0].steps[0].maneuver )
+
+        const center = this.gps.marker.getCenter()
+        this.gps_circle = this.gps.circular(center, 20)
+        this.gps_circle.addTo(this.accuracyLayer)
+
+
 
 
 
@@ -306,6 +391,9 @@ export class ViewNovigator {
             mapDestination: this.gps.marker.getCenter(),
             pitchTarget: this.maxPitch,
             zoomTarget: this.maxZoom,
+            onMiddle: () => {
+
+            },
             onEnd: (mapDestination, pitchTarget, zoomTarget) => {
     
                 if (

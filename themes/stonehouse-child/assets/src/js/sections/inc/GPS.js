@@ -18,12 +18,11 @@ export class GPS {
 
         this.Coordinate = Coordinate
         this.Polygon = Polygon
-        this.VectorLayer = VectorLayer
 
         this.status = false
         this.needExtent = true
         this.marker = null
-        this.accuracyLayer = null
+        this.accuracyLayer = new VectorLayer('vector').addTo(this.UX.map)
 
         document.addEventListener('MyPosition', ev => this.location(ev))
     }
@@ -244,14 +243,13 @@ export class GPS {
         // console.log(res)
 
         // fix browser on multiple click for geoloation on watching position
-        if( res?.lng && res?.lat ) {
+        if ( res?.lng && res?.lat ) {
 
             const coord = new this.Coordinate([res.lng, res.lat])
 
-            this.myLocation.lat = res.lat
-            this.myLocation.lng = res.lng
+            this.myLocation = { lat: res.lat, lng: res.lng }
 
-            if( ! this.marker ) {
+            if ( ! this.marker ) {
 
                 this.marker = this.UX.setHtmlMarker(coord, pointMarker(), 'middle')
                 this.marker.addTo(this.UX.map).show()
@@ -259,11 +257,13 @@ export class GPS {
             } else {
 
                 this.marker.setCoordinates(coord)
-                this.accuracyLayer.remove()
+                this.accuracyLayer.clear()
             }
 
-            const circle = this.circular(coord, res.accuracy)
-            this.accuracyLayer = new this.VectorLayer('vector', circle).addTo(this.UX.map)
+            if ( res.accuracy > 5 ) {
+                const circle = this.circular(coord, res.accuracy)
+                circle.addTo( this.accuracyLayer )
+            }
 
             this.needExtent && this.UX.map.fitExtent(circle.getExtent())
             this.needExtent = false
