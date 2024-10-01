@@ -70,12 +70,12 @@ export class MaptalksUX {
                 }),
 
                 LineVector: new VectorLayer( 'line' ).addTo( this.map ),
-                
+
                 createElementFromHTML,
                 coord,
                 setLineString: this.setLineString,
                 polylineDecoder: decode,
-                
+
                 lineColor: 'rgba(153, 204, 255)',
                 selectedLineColor: 'rgba(85, 136, 255)',
                 lineColorOpaced: 'rgba(153, 204, 255, .5)',
@@ -337,7 +337,7 @@ export class MaptalksUX {
 
     setLineString( steps, lineWidth = 4, lineColor ) {
         return new LineString( steps, {
-            smoothness: 0.2,
+            smoothness: 0.25,
             symbol: { lineColor, lineWidth }
         })
     }

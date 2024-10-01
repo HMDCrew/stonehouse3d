@@ -1,5 +1,6 @@
 import { customEvent } from "../../utils/customEvent.js"
 import { NavigatorCursor } from "./elements/NavigatorCursor.js"
+import { pointMarker } from "./items/pointMarker.js"
 
 const FRAME = 60
 
@@ -269,6 +270,15 @@ export class ViewNovigator {
 
         console.log(this.routes)
         console.log(this.routes[this.route_id])
+
+        Array.from( this.routes[this.route_id].legs[0].steps ).forEach( item => {
+
+            const marker = this.UX.setHtmlMarker(item.maneuver.location, pointMarker(), 'middle')
+            marker.addTo(this.UX.map).show()
+
+        })
+
+
 
         this.stopMapInteractions()
         this.UX.miniMap._containerDOM.classList.add('hide')
