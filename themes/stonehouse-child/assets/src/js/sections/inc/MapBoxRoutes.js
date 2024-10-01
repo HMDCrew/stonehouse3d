@@ -4,7 +4,9 @@ export class MapBoxRoutes {
 
     popup = null
     routeVector = null
+
     selectedLine = null
+    selectedLineOpaced = null
 
     constructor ({ UX, navigator, LineVector, createElementFromHTML, coord, polylineDecoder, setLineString, lineColor = 'red', selectedLineColor = 'red', lineColorOpaced = 'red', selectedLineColorOpaced = 'red' }) {
 
@@ -90,7 +92,7 @@ export class MapBoxRoutes {
 
                 res = JSON.parse(res)
 
-                this.navigator.setRoutes(res.routes)
+                this.navigator.routes = res.routes
 
                 resolve( this.getRoutesSteps( res.routes ) )
             })
@@ -111,8 +113,6 @@ export class MapBoxRoutes {
     linesRoutes( profile, from, to ) {
 
         return new Promise((resolve, reject) => {
-
-            this.routeVector.forEach( async line => this.routeVector.removeGeometry(line) )
 
             this.buildRoute(profile, {from, to}).then(routes_steps => {
 
@@ -138,6 +138,16 @@ export class MapBoxRoutes {
 
     startNavigation() {
 
+        this.routeVector.forEach( async line => {
+
+            if (
+                line !== this.selectedLine &&
+                line !== this.selectedLineOpaced
+            ) {
+                this.routeVector.removeGeometry( line )
+            }
+        })
+
         this.bottomControllers.classList.add('closed')
         this.topControllers.classList.remove('closed')
 
@@ -152,7 +162,7 @@ export class MapBoxRoutes {
         this.bottomControllers.classList.add('closed')
 
         this.UX.cluster.forEach( async marker => marker.show() )
-        this.routeVector.forEach( async line => this.routeVector.removeGeometry(line) )
+        this.routeVector.clear()
     }
 
 
@@ -177,7 +187,7 @@ export class MapBoxRoutes {
 
     selectRoute( idx, lines, opaced ) {
 
-        lines.forEach((line, i) => {
+        lines.forEach( async (line, i) => {
 
             line.bringToBack()
             opaced[i].bringToBack()
@@ -193,6 +203,9 @@ export class MapBoxRoutes {
         opaced[idx].bringToFront()
 
         this.selectedLine = lines[idx]
+        this.selectedLineOpaced = opaced[idx]
+
+        this.navigator.route_id = idx
     }
 
 

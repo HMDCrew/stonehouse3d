@@ -6,6 +6,7 @@ const FRAME = 60
 export class ViewNovigator {
 
     routes
+    route_id
     navigationStarted = false
     paused = false
     
@@ -267,6 +268,7 @@ export class ViewNovigator {
     startNavigation() {
 
         console.log(this.routes)
+        console.log(this.routes[this.route_id])
 
         this.stopMapInteractions()
         this.UX.miniMap._containerDOM.classList.add('hide')
@@ -347,17 +349,5 @@ export class ViewNovigator {
     
             this.gps.marker.setContent( this.originalGpsMarkerContent )
         }
-    }
-
-
-    /**
-     * The setRoutes function assigns the provided routes to the routes property of an object.
-     * @param routes - The `routes` parameter in the `setRoutes` function is typically an array or
-     * object that contains information about the routes in a web application. Each route usually
-     * consists of a URL path, HTTP method, and a handler function that gets executed when the route is
-     * matched. By setting the `routes`
-     */
-    setRoutes( routes ) {
-        this.routes = routes
     }
 }
