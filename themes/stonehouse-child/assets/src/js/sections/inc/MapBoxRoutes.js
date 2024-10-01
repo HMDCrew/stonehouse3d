@@ -1,5 +1,5 @@
 import { sendHttpReq } from "../../utils/api/http"
-import { popupStartNavigation } from "./items/popups/startNavigation"
+// import { popupStartNavigation } from "./items/popups/startNavigation"
 
 export class MapBoxRoutes {
 
@@ -7,7 +7,7 @@ export class MapBoxRoutes {
     routeVector = null
     selectedLine = null
 
-    constructor ({ UX, navigator, LineVector, LineString, createElementFromHTML, coord, polylineDecoder, lineColor = 'red' }) {
+    constructor ({ UX, navigator, LineVector, LineString, createElementFromHTML, coord, polylineDecoder, lineColor = 'red', selectedLineColor = 'red', lineColorOpaced = 'red', selectedLineColorOpaced = 'red' }) {
 
         this.UX = UX
 
@@ -18,23 +18,64 @@ export class MapBoxRoutes {
         this.polylineDecoder = polylineDecoder
         this.createElementFromHTML = createElementFromHTML
         this.coord = coord
+
         this.lineColor = lineColor
+        this.selectedLineColor = selectedLineColor
+        this.lineColorOpaced = lineColorOpaced
+        this.selectedLineColorOpaced = selectedLineColorOpaced
+
+        this.topControllers = document.querySelector('.navigation-controlls-top')
+
+        this.bottomControllers = document.querySelector('.navigation-controlls-bottom')
+        this.btnStartNavigation = this.bottomControllers.querySelector('.btn-start-navigation')
+        this.btnCloseNavigation = this.bottomControllers.querySelector('.btn-stop-navigation')
+
+        this.btnStartNavigation.addEventListener('click', ev => this.startNavigation(), false)
+        this.btnCloseNavigation.addEventListener('click', ev => this.closeNavigation(), false)
     }
 
 
     /**
-     * The `buildRoute` function uses the Mapbox API to generate a route between two locations and
-     * returns a Promise with the decoded route steps.
-     * @param profile - The `profile` parameter in the `buildRoute` function represents the type of
-     * routing profile to use for the directions. It could be values like `driving`, `walking`,
-     * `cycling`, etc., depending on the mode of transportation for which you want to generate the
-     * route.
-     * @returns The `buildRoute` function returns a Promise that resolves with an array of decoded
-     * route coordinates after making a request to the Mapbox Directions API. The decoded route
-     * coordinates are obtained by decoding the geometry of each step in the route and flipping the
-     * latitude and longitude values.
+     * The function `getRoutesSteps` takes an array of routes, extracts the steps from each route's
+     * legs, decodes the polyline geometry, and returns an array of steps for each route.
+     * @param routes - The `getRoutesSteps` function takes an array of routes as input. Each route in
+     * the array should have a `legs` property, which is an array of legs. Each leg should have a
+     * `steps` property, which is an array of steps. Each step should have a `geometry`
+     * @returns The `getRoutesSteps` function returns an array of steps for each route in the input
+     * `routes` array. Each step is decoded using the `polylineDecoder` method with a precision of 5.
+     * The decoded steps are then reversed and stored in the `steps` array, which is returned at the
+     * end of the function.
      */
-    buildRoute(profile, { from = { lat, lng }, to = { lat, lng } }) {
+    getRoutesSteps( routes ) {
+
+        const steps = []
+
+        Array.from( routes ).forEach( ( route, i ) => {
+
+            const leg_steps = route.legs[0].steps
+
+            leg_steps.forEach( step => steps[i] = [...steps[i] || [], ...this.polylineDecoder(step.geometry, 5)] )
+
+            steps[i] = steps[i].map((item, idx) => [].concat(steps[i][idx]).reverse())
+        })
+
+        return steps
+    }
+
+
+    /**
+     * The buildRoute function sends a HTTP request to the Mapbox API to get directions between two
+     * locations and returns a Promise with the route steps.
+     * @param profile - The `profile` parameter in the `buildRoute` function is used to specify the
+     * type of route profile to be used for the directions. It could be values like "driving",
+     * "walking", "cycling", etc., depending on the mode of transportation for which the route is being
+     * generated.
+     * @returns The `buildRoute` function returns a Promise that makes an HTTP request to the Mapbox
+     * Directions API to get route information from the specified `from` location to the `to` location
+     * using the provided `profile`. Once the response is received, it parses the JSON response, sets
+     * the routes in the navigator, and resolves with the steps of the routes.
+     */
+    buildRoute( profile, { from = { lat, lng }, to = { lat, lng } } ) {
 
         return new Promise((resolve, reject) => {
 
@@ -50,39 +91,9 @@ export class MapBoxRoutes {
 
                 res = JSON.parse(res)
 
-                // console.log(res.routes)
-
                 this.navigator.setRoutes(res.routes)
 
-                const steps = res.routes[0].legs[0].steps
-
-                let result = []
-
-                // need review and perform code
-                // const way = new this.VectorLayer('waypoints').addTo(this.UX.map)
-
-                steps.forEach(step => {
-                    result = [...result, ...this.polylineDecoder(step.geometry, 5)]
-
-                    // console.log(step.maneuver.instruction)
-                    // const coord = new this.Coordinate(Array.from(step.maneuver.location))
-                    
-                    // const point = this.setMarker(coord, 'default', pointHelpPointTemplate('test') )
-
-                    // const popup = this.setHtmlMarker(coord, '<span class="content-marker"><span class="popup popup-test">' + step.maneuver.instruction + '</span>')
-                    // popup.addTo(this.UX.map).hide()
-                    // popup.on('click', ev => popup.hide())
-
-                    // point.on('click', ev => popup.show())
-                    // point.addTo(way)
-
-                    // this.UX.map.setCenter(coord)
-                })
-
-                // flip latitude e longitude
-                result = result.map((item, idx) => [].concat(result[idx]).reverse())
-
-                resolve(result)
+                resolve( this.getRoutesSteps( res.routes ) )
             })
         })
     }
@@ -98,33 +109,65 @@ export class MapBoxRoutes {
      * endpoint of the route that is being calculated. It is the location where the route will end.
      * @returns A Promise is being returned from the lineRoute function.
      */
-    lineRoute( profile, from, to ) {
+    linesRoutes( profile, from, to ) {
 
         return new Promise((resolve, reject) => {
 
             this.selectedLine && this.routeVector.removeGeometry(this.selectedLine)
     
-            this.buildRoute(profile, {from, to}).then(route_coordinates => {
-    
-                const line = new this.LineString(route_coordinates, {
-                    symbol: {
-                        lineColor: this.lineColor
-                    }
+            this.buildRoute(profile, {from, to}).then(routes_steps => {
+
+                const lines = []
+                const opaced = []
+
+                const smoothness = 0.3
+
+                routes_steps.forEach( steps => {
+
+                    lines.push(
+
+                        new this.LineString( steps, {
+                            smoothness,
+                            symbol: {
+                                lineColor: this.lineColor,
+                                lineWidth: 4
+                            }
+                        })
+                    )
+
+                    opaced.push(
+
+                        new this.LineString( steps, {
+                            smoothness,
+                            symbol: {
+                                lineColor: this.lineColorOpaced,
+                                lineWidth: 8
+                            }
+                        })
+                    )
                 })
 
-                resolve(line)
+                resolve({ lines, opaced })
             })
         })
     }
 
 
-    startNavigation(ev) {
-        this.popup.remove()
-        this.navigator.startNavigation(ev)
+    startNavigation() {
+
+        this.bottomControllers.classList.add('closed')
+        this.topControllers.classList.remove('closed')
+
+        this.navigator.navigationStarted = true
+        this.navigator.startNavigation()
     }
 
 
     closeNavigation() {
+
+        this.navigator.navigationStarted = false
+        this.bottomControllers.classList.add('closed')
+
         this.UX.cluster.forEach( async marker => marker.show() )
         this.routeVector.removeGeometry( this.selectedLine )
     }
@@ -143,32 +186,59 @@ export class MapBoxRoutes {
             ) marker.hide()
         })
 
-        const dom = this.popup.getDOM()
-        const close = dom.querySelector('.close-btn')
+        this.popup.remove()
 
-        const items = dom.querySelector('.routing-items')
-        items.querySelectorAll('.btn-routing').forEach(async item => item.remove())
-        items.classList.add('justify-around')
+        this.bottomControllers.classList.remove('closed')
+    }
 
-        const start_nav = this.createElementFromHTML( popupStartNavigation() )
-        start_nav.addEventListener('click', ev => this.startNavigation(ev), false)
 
-        close.addEventListener('click', ev => this.closeNavigation(), false)
+    selectRoute( idx, lines, opaced ) {
 
-        items.append( start_nav )
+        lines.forEach((line, i) => {
+
+            line.bringToBack()
+            opaced[i].bringToBack()
+
+            line.updateSymbol({ lineColor: this.lineColor })
+            opaced[i].updateSymbol({ lineColor: this.lineColorOpaced })
+        })
+
+        lines[idx].updateSymbol({ lineColor: this.selectedLineColor })
+        opaced[idx].updateSymbol({ lineColor: this.selectedLineColorOpaced })
+
+        lines[idx].bringToFront()
+        opaced[idx].bringToFront()
+
+        this.selectedLine = lines[idx]
     }
 
 
     drawRoute( profile, from, to ) {
 
-        this.lineRoute( profile, from, to ).then(line => {
+        this.linesRoutes( profile, from, to ).then( ({ lines, opaced }) => {
 
-            line.addTo(this.routeVector)
+            let lastExcent = false
 
-            this.selectedLine = line
+            lines.forEach( line => {
 
-            this.UX.map.fitExtent(line.getExtent())
+                line.addTo(this.routeVector)
 
+                lastExcent = (
+                    lastExcent
+                    ? lastExcent.combine(line.getExtent())
+                    : line.getExtent()
+                )
+            })
+
+            opaced.forEach( (line, i) => {
+
+                line.on('click', ev => this.selectRoute( i, lines, opaced ))
+
+                line.addTo(this.routeVector)
+            })
+
+            this.selectRoute( 0, lines, opaced )
+            this.UX.map.fitExtent(lastExcent, -1)
             this.prepareNavigation( to )
         })
     }

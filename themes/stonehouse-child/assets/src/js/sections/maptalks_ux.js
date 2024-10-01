@@ -47,6 +47,7 @@ export class MaptalksUX {
         this.menu = this.initMenu()
         this.menu.addTo(this.map)
 
+
         // JS DOM three OR Main
         this.manager = new ManageLocations({
             UX: this,
@@ -75,7 +76,10 @@ export class MaptalksUX {
                 createElementFromHTML,
                 coord,
 
-                lineColor: 'red',
+                lineColor: 'rgba(153, 204, 255)',
+                selectedLineColor: 'rgba(85, 136, 255)',
+                lineColorOpaced: 'rgba(153, 204, 255, .5)',
+                selectedLineColorOpaced: 'rgba(85, 136, 255, .5)',
                 polylineDecoder: decode,
             }),
 

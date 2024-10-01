@@ -372,17 +372,56 @@
     }
 
     .navigation {
+        position: absolute;
+        width: 100%;
+        height: 70px;
+        background: #5cb85c;
+        display: flex;
+        align-items: center;
+        padding: 10px 18px;
+        z-index: 10;
+        transition: all .3s;
+
+        &.navigation-controlls-top {
+            top: 0;
+            justify-content: space-between;
+
+            .indications {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+
+                .instruction {
+                    color: white;
+                    font-size: 24px;
+                }
+            }
+
+            &.closed {
+                top: -70px !important;
+            }
+        }
 
         &.navigation-controlls-bottom {
-            position: absolute;
             bottom: 0;
-            width: 100%;
-            background: #5cb85c;
-            display: flex;
             justify-content: flex-end;
-            align-items: center;
-            padding: 10px 18px;
-            transition: all .3s;
+
+            .btn-start-navigation {
+                cursor: pointer;
+                margin: auto;
+
+                svg {
+                    path {
+                        transition: all .3s;
+                    }
+
+                    &:hover {
+                        path {
+                            fill: #323232;
+                        }
+                    }
+                }
+            }
 
             .btn-stop-navigation {
 
