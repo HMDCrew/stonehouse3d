@@ -73,7 +73,6 @@ export class MaptalksUX {
 
                 createElementFromHTML,
                 coord,
-                setLineString: this.setLineString,
                 polylineDecoder: decode,
 
                 lineColor: 'rgba(153, 204, 255)',
@@ -335,7 +334,7 @@ export class MaptalksUX {
     }
 
 
-    setLineString( steps, lineWidth = 4, lineColor ) {
+    setLineString( steps, lineColor, lineWidth = 4 ) {
         return new LineString( steps, {
             smoothness: 0.25,
             symbol: { lineColor, lineWidth }

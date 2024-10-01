@@ -8,7 +8,7 @@ export class MapBoxRoutes {
     selectedLine = null
     selectedLineOpaced = null
 
-    constructor ({ UX, navigator, LineVector, createElementFromHTML, coord, polylineDecoder, setLineString, lineColor = 'red', selectedLineColor = 'red', lineColorOpaced = 'red', selectedLineColorOpaced = 'red' }) {
+    constructor ({ UX, navigator, LineVector, createElementFromHTML, coord, polylineDecoder, lineColor = 'red', selectedLineColor = 'red', lineColorOpaced = 'red', selectedLineColorOpaced = 'red' }) {
 
         this.UX = UX
 
@@ -18,7 +18,6 @@ export class MapBoxRoutes {
         this.polylineDecoder = polylineDecoder
         this.createElementFromHTML = createElementFromHTML
         this.coord = coord
-        this.setLineString = setLineString
 
         this.lineColor = lineColor
         this.selectedLineColor = selectedLineColor
@@ -122,11 +121,11 @@ export class MapBoxRoutes {
                 routes_steps.forEach( steps => {
 
                     lines.push(
-                        this.setLineString( steps, 4, this.lineColor )
+                        this.UX.setLineString( steps, this.lineColor )
                     )
 
                     opaced.push(
-                        this.setLineString( steps, 8, this.lineColorOpaced )
+                        this.UX.setLineString( steps, this.lineColorOpaced, 8 )
                     )
                 })
 

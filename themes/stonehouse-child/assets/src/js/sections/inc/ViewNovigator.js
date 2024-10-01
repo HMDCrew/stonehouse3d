@@ -274,8 +274,8 @@ export class ViewNovigator {
         Array.from( this.routes[this.route_id].legs[0].steps ).forEach( item => {
 
             const marker = this.UX.setHtmlMarker(item.maneuver.location, pointMarker(), 'middle')
+            
             marker.addTo(this.UX.map).show()
-
         })
 
 
