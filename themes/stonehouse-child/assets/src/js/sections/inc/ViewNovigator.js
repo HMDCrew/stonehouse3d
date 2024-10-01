@@ -17,7 +17,7 @@ export class ViewNovigator {
     delta
     then
 
-    constructor({ UX, gps, LineString, polylineDecoder }) {
+    constructor({ UX, gps, polylineDecoder }) {
 
         this.UX = UX
 
@@ -35,7 +35,6 @@ export class ViewNovigator {
         this.originalBearing = null
         this.originalGpsMarker = null
 
-        this.LineString = LineString
         this.polylineDecoder = polylineDecoder
 
         this.bottomControllers = document.querySelector('.navigation-controlls-bottom')

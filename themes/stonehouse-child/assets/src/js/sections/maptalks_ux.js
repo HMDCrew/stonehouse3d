@@ -66,21 +66,20 @@ export class MaptalksUX {
                         VectorLayer
                     }),
 
-                    LineString,
                     polylineDecoder: decode
                 }),
 
                 LineVector: new VectorLayer( 'line' ).addTo( this.map ),
-                LineString,
-
+                
                 createElementFromHTML,
                 coord,
-
+                setLineString: this.setLineString,
+                polylineDecoder: decode,
+                
                 lineColor: 'rgba(153, 204, 255)',
                 selectedLineColor: 'rgba(85, 136, 255)',
                 lineColorOpaced: 'rgba(153, 204, 255, .5)',
                 selectedLineColorOpaced: 'rgba(85, 136, 255, .5)',
-                polylineDecoder: decode,
             }),
 
             Coordinate,
@@ -332,6 +331,14 @@ export class MaptalksUX {
             'single'            : false,
             'content'           : content,
             'verticalAlignment' : alignment
+        })
+    }
+
+
+    setLineString( steps, lineWidth = 4, lineColor ) {
+        return new LineString( steps, {
+            smoothness: 0.2,
+            symbol: { lineColor, lineWidth }
         })
     }
 

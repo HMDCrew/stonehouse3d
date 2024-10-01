@@ -1,5 +1,4 @@
 import { sendHttpReq } from "../../utils/api/http"
-// import { popupStartNavigation } from "./items/popups/startNavigation"
 
 export class MapBoxRoutes {
 
@@ -7,17 +6,17 @@ export class MapBoxRoutes {
     routeVector = null
     selectedLine = null
 
-    constructor ({ UX, navigator, LineVector, LineString, createElementFromHTML, coord, polylineDecoder, lineColor = 'red', selectedLineColor = 'red', lineColorOpaced = 'red', selectedLineColorOpaced = 'red' }) {
+    constructor ({ UX, navigator, LineVector, createElementFromHTML, coord, polylineDecoder, setLineString, lineColor = 'red', selectedLineColor = 'red', lineColorOpaced = 'red', selectedLineColorOpaced = 'red' }) {
 
         this.UX = UX
 
         this.navigator = navigator
 
-        this.LineString = LineString
         this.routeVector = LineVector
         this.polylineDecoder = polylineDecoder
         this.createElementFromHTML = createElementFromHTML
         this.coord = coord
+        this.setLineString = setLineString
 
         this.lineColor = lineColor
         this.selectedLineColor = selectedLineColor
@@ -113,37 +112,21 @@ export class MapBoxRoutes {
 
         return new Promise((resolve, reject) => {
 
-            this.selectedLine && this.routeVector.removeGeometry(this.selectedLine)
-    
+            this.routeVector.forEach( async line => this.routeVector.removeGeometry(line) )
+
             this.buildRoute(profile, {from, to}).then(routes_steps => {
 
-                const lines = []
+                const lines  = []
                 const opaced = []
-
-                const smoothness = 0.3
 
                 routes_steps.forEach( steps => {
 
                     lines.push(
-
-                        new this.LineString( steps, {
-                            smoothness,
-                            symbol: {
-                                lineColor: this.lineColor,
-                                lineWidth: 4
-                            }
-                        })
+                        this.setLineString( steps, 4, this.lineColor )
                     )
 
                     opaced.push(
-
-                        new this.LineString( steps, {
-                            smoothness,
-                            symbol: {
-                                lineColor: this.lineColorOpaced,
-                                lineWidth: 8
-                            }
-                        })
+                        this.setLineString( steps, 8, this.lineColorOpaced )
                     )
                 })
 
@@ -169,7 +152,7 @@ export class MapBoxRoutes {
         this.bottomControllers.classList.add('closed')
 
         this.UX.cluster.forEach( async marker => marker.show() )
-        this.routeVector.removeGeometry( this.selectedLine )
+        this.routeVector.forEach( async line => this.routeVector.removeGeometry(line) )
     }
 
 
