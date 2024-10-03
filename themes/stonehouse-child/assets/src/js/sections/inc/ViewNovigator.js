@@ -42,10 +42,12 @@ export class ViewNovigator {
         this.Coordinate = Coordinate
         this.VectorLayer = VectorLayer
 
+        this.topControllers = document.querySelector('.navigation-controlls-top')
         this.bottomControllers = document.querySelector('.navigation-controlls-bottom')
         this.stopBtn = document.querySelector('.btn-stop-navigation')
 
         this.stopBtn.addEventListener('click', ev => this.stopNavigation(), false)
+        this.indications = this.topControllers.querySelector('.indications .instruction')
 
         document.addEventListener('keyup', ev => {
             
@@ -264,6 +266,7 @@ export class ViewNovigator {
         onEnd(mapDestination, pitchTarget, zoomTarget)
     }
 
+
     pointsDistance( p1, p2 ) {
         // return Math.sqrt(
         //     Math.pow( p1.x - p2.x, 2 ) + 
@@ -289,8 +292,8 @@ export class ViewNovigator {
     }
 
 
-    showStepIndication( maneuver ) {
-        console.log( maneuver )
+    updateInstruction( step ) {
+        this.indications.textContent = step.maneuver.instruction
     }
 
 
@@ -305,18 +308,16 @@ export class ViewNovigator {
 
                 const coord = new this.Coordinate(step.maneuver.location)
                 const myLocation = this.gps.marker.getCenter()
-    
-                this.accuracyLayer.removeGeometry( this.gps_circle )
-                this.gps_circle = this.gps.circular(myLocation, 20)
-                this.gps_circle.addTo(this.accuracyLayer)
 
                 const distanceHelp = this.pointsDistance( myLocation, coord )
 
-                if ( distanceHelp <= 3 ) {
-
-                    this.showStepIndication( step.maneuver )
+                if (
+                    distanceHelp <= 4 ||
+                    step.maneuver.bearing_before <= 4
+                ) {
 
                     this.selectedStep++
+                    this.updateInstruction( path.legs[0].steps[this.selectedStep] )
                 }
             }
         }
@@ -333,37 +334,17 @@ export class ViewNovigator {
      */
     startNavigation() {
 
-        const path = this.routes[this.route_id]
-
-        console.log(path)
-        
         this.accuracyLayer = new this.VectorLayer('vector-helps').addTo(this.UX.map)
-        this.selectedStep = 1
+        this.selectedStep = 0
 
-        Array.from( path.legs[0].steps ).forEach( step => {
+        // const path = this.routes[this.route_id]
+        // console.log(path)
+        // Array.from( path.legs[0].steps ).forEach( async step => {
+        //     const marker = this.UX.setHtmlMarker(step.maneuver.location, pointMarker(), 'middle')
+        //     marker.addTo(this.UX.map).show()
+        // })
 
-            const marker = this.UX.setHtmlMarker(step.maneuver.location, pointMarker(), 'middle')
-            marker.addTo(this.UX.map).show()
-
-            const coord = new this.Coordinate(step.maneuver.location)
-
-            console.log( this.pointsDistance( this.gps.marker.getCenter(), coord ) )
-
-            const circle = this.gps.circular(coord, 20)
-            circle.addTo(this.accuracyLayer)
-        })
-
-        // [9.182454, 45.468506] => help maneuver existential big problem
-
-        this.showStepIndication( path.legs[0].steps[0].maneuver )
-
-        const center = this.gps.marker.getCenter()
-        this.gps_circle = this.gps.circular(center, 20)
-        this.gps_circle.addTo(this.accuracyLayer)
-
-
-
-
+        this.positionUpdated( true )
 
         this.stopMapInteractions()
         this.UX.miniMap._containerDOM.classList.add('hide')
@@ -385,7 +366,6 @@ export class ViewNovigator {
             gps: this.gps,
             firstDecodedPolyline: this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry),
         })
-
 
         this.animateView({
             mapDestination: this.gps.marker.getCenter(),

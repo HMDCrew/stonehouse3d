@@ -36,7 +36,7 @@ get_header();
 						</svg>
 					</div>
 					<div class="indications">
-						<span class="instruction">text</span>
+						<span class="instruction"></span>
 					</div>
 				</div>
 
