@@ -151,7 +151,7 @@ export class MapBoxRoutes {
         this.topControllers.classList.remove('closed')
 
         this.navigator.navigationStarted = true
-        this.navigator.startNavigation()
+        this.navigator.startNavigation( this.selectedLine )
     }
 
 
@@ -213,6 +213,8 @@ export class MapBoxRoutes {
         this.linesRoutes( profile, from, to ).then( ({ lines, opaced }) => {
 
             let lastExcent = false
+
+            this.lines = lines
 
             lines.forEach( line => {
 

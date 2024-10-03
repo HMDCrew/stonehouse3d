@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@mapbox/polyline": "^1.2.1",
+    "@turf/turf": "^7.1.0",
     "canvas": "^2.11.2",
     "dotenv-webpack": "^8.1.0",
     "maptalks": "^1.0.0-rc.36",

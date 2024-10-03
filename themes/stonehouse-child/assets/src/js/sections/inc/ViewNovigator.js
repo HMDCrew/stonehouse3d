@@ -2,6 +2,7 @@ import { customEvent } from "../../utils/customEvent.js"
 import { NavigatorCursor } from "./elements/NavigatorCursor.js"
 import { pointMarker } from "./items/pointMarker.js"
 import { toRadians } from "../../utils/math/toRadians.js"
+import * as turf from "@turf/turf"
 
 const FRAME = 60
 
@@ -291,6 +292,9 @@ export class ViewNovigator {
         )
     }
 
+    turfCoordSystem( coordinates ) {
+        return coordinates.map( item => [item.x, item.y] )
+    }
 
     updateInstruction( step ) {
         this.indications.textContent = step.maneuver.instruction
@@ -308,6 +312,13 @@ export class ViewNovigator {
 
                 const coord = new this.Coordinate(step.maneuver.location)
                 const myLocation = this.gps.marker.getCenter()
+
+                // Recalculates the position when you go the wrong way
+                const turfLineString = turf.lineString(this.turfCoordSystem( this.selectedLine.getCoordinates() ))
+                const cursorPoint = turf.point([myLocation.x, myLocation.y])
+                const distance = turf.pointToLineDistance(cursorPoint, turfLineString, { units: 'meters' })
+
+                console.log( distance )
 
                 const distanceHelp = this.pointsDistance( myLocation, coord )
 
@@ -332,8 +343,9 @@ export class ViewNovigator {
      * provide information about events that occur in the browser, such as mouse clicks, key presses,
      * or form submissions.
      */
-    startNavigation() {
+    startNavigation( selectedLine ) {
 
+        this.selectedLine = selectedLine
         this.accuracyLayer = new this.VectorLayer('vector-helps').addTo(this.UX.map)
         this.selectedStep = 0
 
