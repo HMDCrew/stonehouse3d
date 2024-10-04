@@ -69,7 +69,8 @@ export class MaptalksUX {
                     Coordinate,
                     VectorLayer,
 
-                    polylineDecoder: decode
+                    polylineDecoder: decode,
+                    coord,
                 }),
 
                 LineVector: new VectorLayer( 'line' ).addTo( this.map ),

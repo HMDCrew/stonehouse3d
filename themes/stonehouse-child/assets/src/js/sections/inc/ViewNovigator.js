@@ -21,7 +21,7 @@ export class ViewNovigator {
     delta
     then
 
-    constructor({ UX, gps, Coordinate, VectorLayer, polylineDecoder }) {
+    constructor({ UX, gps, Coordinate, VectorLayer, polylineDecoder, coord }) {
 
         this.UX = UX
 
@@ -40,6 +40,7 @@ export class ViewNovigator {
         this.originalGpsMarker = null
 
         this.polylineDecoder = polylineDecoder
+        this.coord = coord
         this.Coordinate = Coordinate
         this.VectorLayer = VectorLayer
 
@@ -301,6 +302,27 @@ export class ViewNovigator {
     }
 
 
+    refreshNavigation() {
+
+        const mapBox = this.UX.manager.mapBox
+        const gpsCoord = this.gps.marker.getCoordinates()
+
+        mapBox.routeVector.clear()
+        mapBox.linesRoutes( mapBox.profile, this.coord(gpsCoord), mapBox.destination ).then( ({ lines, opaced }) => {
+    
+            mapBox.lines = lines
+    
+            lines[0].addTo(mapBox.routeVector)
+            opaced[0].addTo(mapBox.routeVector)
+
+            mapBox.selectRoute( 0, lines, opaced )
+        })
+
+        this.selectedLine = mapBox.selectedLine
+        this.turfLineString = turf.lineString(this.turfCoordSystem( this.selectedLine.getCoordinates() ))
+        this.selectedStep = 0
+    }
+
     positionUpdated( ev ) {
 
         if ( this.navigationStarted ) {
@@ -314,11 +336,12 @@ export class ViewNovigator {
                 const myLocation = this.gps.marker.getCenter()
 
                 // Recalculates the position when you go the wrong way
-                const turfLineString = turf.lineString(this.turfCoordSystem( this.selectedLine.getCoordinates() ))
                 const cursorPoint = turf.point([myLocation.x, myLocation.y])
-                const distance = turf.pointToLineDistance(cursorPoint, turfLineString, { units: 'meters' })
+                const distance = turf.pointToLineDistance(cursorPoint, this.turfLineString, { units: 'meters' })
 
-                console.log( distance )
+                if ( distance >= 8 ) {
+                    this.refreshNavigation()
+                }
 
                 const distanceHelp = this.pointsDistance( myLocation, coord )
 
@@ -346,7 +369,8 @@ export class ViewNovigator {
     startNavigation( selectedLine ) {
 
         this.selectedLine = selectedLine
-        this.accuracyLayer = new this.VectorLayer('vector-helps').addTo(this.UX.map)
+        // this.accuracyLayer = new this.VectorLayer('vector-helps').addTo(this.UX.map)
+        this.turfLineString = turf.lineString(this.turfCoordSystem( this.selectedLine.getCoordinates() ))
         this.selectedStep = 0
 
         // const path = this.routes[this.route_id]

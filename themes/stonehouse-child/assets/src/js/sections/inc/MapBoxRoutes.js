@@ -5,6 +5,9 @@ export class MapBoxRoutes {
     popup = null
     routeVector = null
 
+    destination = null
+    profile = null
+
     selectedLine = null
     selectedLineOpaced = null
 
@@ -252,6 +255,9 @@ export class MapBoxRoutes {
      * their supported profiles
      */
     buildRoutingPath( destination, profile ) {
+
+        this.destination = destination
+        this.profile = profile
 
         if ( ! this.navigator.gps.status ) {
 
