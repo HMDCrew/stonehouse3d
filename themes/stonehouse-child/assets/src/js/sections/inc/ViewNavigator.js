@@ -1,12 +1,11 @@
 import { customEvent } from "../../utils/customEvent.js"
 import { NavigatorCursor } from "./elements/NavigatorCursor.js"
-import { pointMarker } from "./items/pointMarker.js"
 import { toRadians } from "../../utils/math/toRadians.js"
 import * as turf from "@turf/turf"
 
 const FRAME = 60
 
-export class ViewNovigator {
+export class ViewNavigator {
 
     routes
     route_id

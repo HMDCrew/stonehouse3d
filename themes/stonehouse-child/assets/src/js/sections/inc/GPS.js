@@ -66,7 +66,6 @@ export class GPS {
 
         const flatCoordinates = [];
 
-        // che OpenLayer ci perdoni per i nostri peccati
         for (let i = 0; i < n; ++i) {
 
             flatCoordinates.push(
@@ -240,9 +239,7 @@ export class GPS {
 
         const res = ev.detail
 
-        // console.log(res)
-
-        // fix browser on multiple click for geoloation on watching position
+        // fix browser on multiple click for geolocation on watching position
         if ( res?.lng && res?.lat ) {
 
             const coord = new this.Coordinate([res.lng, res.lat])

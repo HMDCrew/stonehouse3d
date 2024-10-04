@@ -104,14 +104,14 @@ export class ManageLocations extends Location {
     parameters: `coordinate` and `marker`. Here's a breakdown of what it does: */
     handleCreateLocation = async ( coordinate, marker ) => {
 
-        let reponse = {status: 'error'}
+        let response = {status: 'error'}
 
         this.save.classList.add('loading')
 
         await crud.create_location( coordinate.x, coordinate.y ).then( res => {
 
             res = JSON.parse(res)
-            reponse = res
+            response = res
 
             if ( res.status === 'success' ) {
 
@@ -132,7 +132,7 @@ export class ManageLocations extends Location {
             }
         })
 
-        return reponse
+        return response
     }
 
 

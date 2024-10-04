@@ -1,4 +1,3 @@
-// import * as maptalks from 'maptalks'
 import { TileLayer, Map, Polygon, control, VectorLayer, ui, Coordinate, Marker, LineString } from 'maptalks'
 import { ClusterLayer } from 'maptalks.markercluster/dist/maptalks.markercluster'
 
@@ -7,18 +6,13 @@ import { GPS } from './inc/GPS'
 import { ManageLocations } from './inc/ManageLocations'
 import { createElementFromHTML } from '../utils/dom_from_string'
 import { MapBoxRoutes } from './inc/MapBoxRoutes'
-import { ViewNovigator } from './inc/ViewNovigator'
+import { ViewNavigator } from './inc/ViewNavigator'
 import { markerTemplate } from './inc/items/markerTemplate'
 import { coord } from "./inc/items/coord"
 import { decode } from "@mapbox/polyline"
 import { myLocation } from './inc/items/menu/myLocation'
 import { locations } from './inc/items/menu/locations'
 
-// urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-// topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
-//      fix: topografica: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png",
-// geografica: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-// roards: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
 
 export class MaptalksUX {
 
@@ -55,7 +49,7 @@ export class MaptalksUX {
             mapBox: new MapBoxRoutes({
                 UX: this,
 
-                navigator: new ViewNovigator({
+                navigator: new ViewNavigator({
                     UX: this,
 
                     gps: new GPS({
