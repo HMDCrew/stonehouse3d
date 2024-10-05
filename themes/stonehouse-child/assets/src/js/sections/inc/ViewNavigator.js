@@ -50,6 +50,7 @@ export class ViewNavigator {
         this.stopBtn.addEventListener('click', ev => this.stopNavigation(), false)
         this.indications = this.topControllers.querySelector('.indications .instruction')
 
+
         document.addEventListener('keyup', ev => {
             
             const loc = this.gps.myLocation
@@ -322,12 +323,15 @@ export class ViewNavigator {
         this.selectedStep = 0
     }
 
+
     positionUpdated( ev ) {
 
         if ( this.navigationStarted ) {
 
             const path = this.routes[this.route_id]
             const step = path.legs[0].steps[this.selectedStep]
+
+            this.UX.map.setCenter(this.gps.marker.getCenter())
             
             if ( step ) {
 
@@ -372,6 +376,7 @@ export class ViewNavigator {
         this.turfLineString = turf.lineString(this.turfCoordSystem( this.selectedLine.getCoordinates() ))
         this.selectedStep = 0
 
+
         // const path = this.routes[this.route_id]
         // console.log(path)
         // Array.from( path.legs[0].steps ).forEach( async step => {
@@ -406,9 +411,7 @@ export class ViewNavigator {
             mapDestination: this.gps.marker.getCenter(),
             pitchTarget: this.maxPitch,
             zoomTarget: this.maxZoom,
-            onMiddle: () => {
-
-            },
+            onMiddle: () => {},
             onEnd: (mapDestination, pitchTarget, zoomTarget) => {
     
                 if (
