@@ -5,9 +5,10 @@ import { normalizeAngle } from "../../../utils/math/normalizeAngle.js"
 
 export class NavigatorCursor {
 
-    constructor({ gps, firstDecodedPolyline }) {
+    constructor({ gps, map, firstDecodedPolyline }) {
 
         this.gps = gps
+        this.map = map
 
         this.center = this.gps.marker.getCenter()
         this.lastPosition = this.center
@@ -18,7 +19,13 @@ export class NavigatorCursor {
         this.arrow = document.querySelector('.navigator-arrow')
 
         // init Cursor first rotation
-        this.arrow.style.transform = this.jsTrasformRotate(
+        // this.arrow.style.transform = this.jsTrasformRotate(
+        //     this.bearingAngle({
+        //         firstPoint: this.center,
+        //         lastPoint: { x: firstDecodedPolyline[0][1], y: firstDecodedPolyline[0][0] },
+        //     })
+        // )
+        this.map.setBearing(
             this.bearingAngle({
                 firstPoint: this.center,
                 lastPoint: { x: firstDecodedPolyline[0][1], y: firstDecodedPolyline[0][0] },
@@ -38,9 +45,9 @@ export class NavigatorCursor {
      * @returns The function `jsTrasformRotate(angle)` returns a string that represents a CSS `rotate`
      * transformation with the specified angle in degrees.
      */
-    jsTrasformRotate( angle ) {
-        return `rotate(${ angle }deg)`
-    }
+    // jsTrasformRotate( angle ) {
+    //     return `rotate(${ angle }deg)`
+    // }
 
 
     /**
@@ -50,9 +57,9 @@ export class NavigatorCursor {
      * `transform` property of the element and converting it to a floating-point number using
      * `parseFloat()`.
      */
-    getJsTrasformRotate() {
-        return parseFloat(this.arrow.style.transform.split('(')[1].split(')')[0])
-    }
+    // getJsTrasformRotate() {
+    //     return parseFloat(this.arrow.style.transform.split('(')[1].split(')')[0])
+    // }
 
 
     /**
@@ -108,12 +115,14 @@ export class NavigatorCursor {
                 requestAnimationFrame( () => step() )
 
                 currentAngle += angleFrames
-                this.arrow.style.transform = this.jsTrasformRotate( currentAngle )
+                // this.arrow.style.transform = this.jsTrasformRotate( currentAngle )
+                this.map.setBearing(currentAngle)
 
                 frame++
 
             } else {
-                this.arrow.style.transform = this.arrow.style.transform = this.jsTrasformRotate( targetAngle )
+                // this.arrow.style.transform = this.arrow.style.transform = this.jsTrasformRotate( targetAngle )
+                this.map.setBearing(currentAngle)
             }
         }
     }
@@ -131,7 +140,7 @@ export class NavigatorCursor {
 
         this.animateRotation({
 
-            currentAngle: this.getJsTrasformRotate(),
+            currentAngle: this.map.getBearing(),// this.getJsTrasformRotate(),
 
             targetAngle: this.bearingAngle({
                 firstPoint: { x: ev.detail.lng, y: ev.detail.lat },

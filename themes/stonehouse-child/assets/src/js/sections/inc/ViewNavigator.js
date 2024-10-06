@@ -343,7 +343,7 @@ export class ViewNavigator {
                 const distance = turf.pointToLineDistance(cursorPoint, this.turfLineString, { units: 'meters' })
 
                 if ( distance >= 8 ) {
-                    this.refreshNavigation()
+                    // this.refreshNavigation()
                 }
 
                 const distanceHelp = this.pointsDistance( myLocation, coord )
@@ -404,6 +404,7 @@ export class ViewNavigator {
 
         const cursor = new NavigatorCursor({
             gps: this.gps,
+            map: this.UX.map,
             firstDecodedPolyline: this.polylineDecoder(this.routes[0].legs[0].steps[0].geometry),
         })
 
